@@ -35,6 +35,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
           }
         };
 
+        // Zobrazíme, co se chystáme odeslat
+        debugOutput.textContent = 'Odesílám následující data na API:\n' + JSON.stringify(requestBody, null, 2);
+
         const apiResponse = await fetch(apiEndpoint, {
           method: 'POST',
           headers: {
