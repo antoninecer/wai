@@ -101,7 +101,16 @@ async function main() {
     log('Attempting to parse body as JSON...');
     try {
       const responseJson = JSON.parse(responseText);
-      log('Successfully parsed JSON!', responseJson);
+      log('API response (parsed JSON):', responseJson);
+
+      if (responseJson.status === 'completed' && responseJson.auraMap) {
+        log('Aura Map received for current page:', responseJson.auraMap);
+      } else if (responseJson.status === 'analyzing_domain') {
+        log('Analysis for this domain is in progress. Please check back shortly.', responseJson.message);
+      } else {
+        log('Unexpected API response status.', responseJson);
+      }
+
     } catch (e) {
       log(`Error parsing JSON: ${e.message}`);
     }
