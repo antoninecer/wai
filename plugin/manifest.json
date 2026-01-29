@@ -3,7 +3,7 @@
     "name": "Web Aura Index",
     "version": "0.1.0",
     "description": "Provides an instinctive orientation in the digital space.",
-    "permissions": ["activeTab", "scripting", "storage"],
+    "permissions": ["activeTab", "scripting", "storage", "action"],
     "host_permissions": ["*://api.wai.ventureout.cz/*"],
     "action": {
         "default_popup": "popup.html"

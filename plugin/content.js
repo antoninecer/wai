@@ -24,13 +24,28 @@ chrome.runtime.onMessage.addListener(
       if (request.pageAura && request.pageAura.links) {
         applyAuraToLinks(request.pageAura.links);
       }
-      // TODO: Zde v budoucnu nastavíme barvu ikony podle request.domainAura
+      if (request.domainAura && request.domainAura.color) {
+        // Nastavíme barvu odznaku na ikoně
+        chrome.runtime.sendMessage({ type: 'SET_BADGE', color: request.domainAura.color, text: 'A' });
+      }
     } else if (request.type === "ANALYSIS_IN_PROGRESS") {
       console.log("Content script received ANALYSIS_IN_PROGRESS message.");
-      // TODO: Zde v budoucnu zešedneme ikonu pluginu
+      chrome.runtime.sendMessage({ type: 'SET_BADGE', color: '#808080', text: '...' }); // Šedá barva pro analýzu
     }
   }
 );
+
+// Posluchač pro zprávy od content scriptu v background scriptu (nebo popupu)
+// Tento kód se musí spustit v kontextu, kde má přístup k chrome.action API.
+// Pro Manifest V3 je to Service Worker. Prozatím to vložíme do popup.js,
+// ale ideálně by to mělo být v service workeru.
+chrome.runtime.onMessage.addListener((request) => {
+    if (request.type === 'SET_BADGE') {
+        chrome.action.setBadgeText({ text: request.text });
+        chrome.action.setBadgeBackgroundColor({ color: request.color });
+    }
+});
+
 
 // Funkce pro aplikování aury na odkazy
 function applyAuraToLinks(linksData) {
