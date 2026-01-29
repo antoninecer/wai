@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 // Funkce pro aplikování aury na odkazy
-function applyAuraToLinks(linksData, pageAuraColor) {
+function applyAuraToLinks(linksData) {
     const allLinks = document.querySelectorAll('a[href]');
     const linkMap = new Map(linksData.map(link => [link.url, link.aura.circle.color]));
 
@@ -45,16 +45,10 @@ function applyAuraToLinks(linksData, pageAuraColor) {
         const auraColor = linkMap.get(absoluteUrl);
 
         if (auraColor) {
-            const color = auraColor === 'white' ? '#ccc' : auraColor; // Bílá by nebyla vidět, takže světle šedá
-            linkElement.style.boxShadow = `0 0 5px 2px ${color}`;
-            linkElement.style.transition = 'box-shadow 0.3s ease-in-out';
+            const color = auraColor === 'white' ? '#cccccc' : auraColor; // Bílá by nebyla vidět
+            // Aplikujeme "záření" přímo na text
+            linkElement.style.textShadow = `0 0 3px ${color}, 0 0 5px ${color}`;
+            linkElement.style.transition = 'text-shadow 0.3s ease-in-out';
         }
     });
-
-    // Zde bychom mohli také aplikovat auru na tělo stránky, pokud je definována
-    if (pageAuraColor) {
-        const color = pageAuraColor === 'white' ? '#eee' : pageAuraColor;
-        document.body.style.boxShadow = `inset 0 0 15px 5px ${color}`;
-        document.body.style.transition = 'box-shadow 0.5s ease-in-out';
-    }
 }

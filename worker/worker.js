@@ -30,15 +30,23 @@ async function main() {
             const $ = cheerio.load(html);
 
             const links = [];
+            const linkAuraCache = new Map(); // Cache pro aury v rámci jedné analýzy
+
             $('a').each((i, element) => {
                 const href = $(element).attr('href');
                 if (href && !href.startsWith('#')) {
                     try {
                         const absoluteUrl = new URL(href, urlToAnalyze).href;
+                        
+                        // Zkontrolujeme, zda už pro tuto URL máme auru
+                        if (!linkAuraCache.has(absoluteUrl)) {
+                            linkAuraCache.set(absoluteUrl, getMockAuraForLink(absoluteUrl));
+                        }
+                        
                         links.push({
                             url: absoluteUrl,
                             text: $(element).text().trim(),
-                            aura: getMockAuraForLink(absoluteUrl) 
+                            aura: linkAuraCache.get(absoluteUrl)
                         });
                     } catch (e) {
                         console.log(`Skipping invalid URL: ${href}`);
