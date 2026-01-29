@@ -1,7 +1,4 @@
-// Globální reference na debugovací okno
-const debugOutput = document.getElementById('debug-output');
-
-// Funkce pro logování do popup okna s časovým razítkem
+// Function for logging to the popup window with a timestamp
 function log(message, data = null) {
   const time = new Date().toLocaleTimeString();
   const logEntry = document.createElement('p');
@@ -27,42 +24,42 @@ function log(message, data = null) {
   debugOutput.scrollTop = debugOutput.scrollHeight;
 }
 
-// Funkce pro získání nebo vygenerování userId
+// Function to get or generate a userId
 async function getUserId() {
-  log('Vstupuji do getUserId...');
+  log('Entering getUserId...');
   let { userId } = await chrome.storage.local.get('userId');
   if (!userId) {
-    log('UserId nenalezeno, generuji nové...');
+    log('No userId found, generating a new one...');
     userId = crypto.randomUUID();
     await chrome.storage.local.set({ userId });
-    log(`Nové userId vygenerováno: ${userId}`);
+    log(`New userId generated: ${userId}`);
   } else {
-    log(`Nalezeno existující userId: ${userId}`);
+    log(`Found existing userId: ${userId}`);
   }
   return userId;
 }
 
-// Hlavní logika
+// Main logic
 async function main() {
   try {
-    log('Hlavní funkce spuštěna.');
+    log('Main function started.');
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    log('Dotazuji se na aktivní kartu...');
+    log('Querying for active tab...');
     
     if (!tabs || tabs.length === 0) {
-        log('Chyba: Nepodařilo se najít aktivní kartu.');
+        log('Error: Could not find an active tab.');
         return;
     }
 
-    log('Posílám zprávu "dejMiData" na content script...');
+    log('Sending "dejMiData" message to content script...');
     const response = await chrome.tabs.sendMessage(tabs[0].id, { greeting: "dejMiData" });
 
     if (!response || !response.data) {
-      log('Chyba: Odpověď z content scriptu neobsahuje data.');
+      log('Error: No data received from content script.');
       return;
     }
     
-    log('Data z content scriptu úspěšně přijata.', response.data);
+    log('Successfully received data from content script.', response.data);
     
     const userId = await getUserId();
     const apiEndpoint = 'https://api.wai.ventureout.cz/analyze';
@@ -77,42 +74,42 @@ async function main() {
       }
     };
 
-    log(`Připraveno k odeslání na API endpoint: ${apiEndpoint}`, requestBody);
+    log(`Ready to send to API endpoint: ${apiEndpoint}`, requestBody);
 
-    log('Odesílám fetch požadavek...');
+    log('Sending fetch request...');
     const apiResponse = await fetch(apiEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     });
 
-    log(`Odpověď z API přijata se statusem: ${apiResponse.status}`);
+    log(`API response received with status: ${apiResponse.status}`);
 
     const responseHeaders = {};
     apiResponse.headers.forEach((value, key) => {
       responseHeaders[key] = value;
     });
-    log('Hlavičky (headers) odpovědi:', responseHeaders);
+    log('Response headers:', responseHeaders);
 
-    log('Čtu tělo odpovědi jako text...');
+    log('Reading response body as text...');
     const responseText = await apiResponse.text();
 
-    log('Surové tělo odpovědi (raw text):', responseText);
+    log('Raw response body:', responseText);
 
-    log('Pokouším se parsovat tělo jako JSON...');
+    log('Attempting to parse body as JSON...');
     try {
       const responseJson = JSON.parse(responseText);
-      log('Parsování na JSON úspěšné!', responseJson);
+      log('Successfully parsed JSON!', responseJson);
     } catch (e) {
-      log(`Chyba při parsování JSON: ${e.message}`);
+      log(`Error parsing JSON: ${e.message}`);
     }
 
   } catch (error) {
-    log('Došlo k závažné chybě v hlavní funkci: ' + error.message);
-    console.error("Detailní chyba:", error);
+    log('A critical error occurred in main function: ' + error.message);
+    console.error("Detailed error:", error);
   }
 }
 
-// Vyčistíme starý log a spustíme
-debugOutput.innerHTML = '';
+// Clear old log and run
+debugOutput.innerHTML = '<p>Popup opened...</p>';
 main();
