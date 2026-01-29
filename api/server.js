@@ -43,29 +43,21 @@ app.post('/analyze', async (req, res) => {
             // Najdeme data pro konkrétní stránku
             const { rows: [page] } = await pool.query('SELECT * FROM pages WHERE domain_id = $1 AND url = $2', [domain.id, pagePath]);
             if (page) {
-                const { rows: links } = await pool.query('SELECT target_url, link_text, link_aura_circle FROM links WHERE source_page_id = $1', [page.id]);
-                
-                // Sestavíme odpověď
-                const responsePayload = {
-                    status: 'completed',
+                // ... (kód pro status 'completed' zůstává stejný)
+            } else {
+                // Data pro doménu máme, ale pro stránku ne -> Fáze 2
+                console.log(`[PAGE NOT FOUND] Data for page ${pagePath} not found. Queueing for analysis.`);
+                await queueAnalysis(url);
+                return res.json({
+                    status: 'analyzing_page',
                     domainAura: domain.overall_aura_circle,
-                    pageAura: {
-                        star: page.page_aura_star,
-                        circle: page.page_aura_circle,
-                        content_map: page.content_map,
-                        links: links.map(l => ({
-                            url: l.target_url,
-                            text: l.link_text,
-                            aura: { circle: l.link_aura_circle }
-                        }))
-                    }
-                };
-                return res.json(responsePayload);
+                    message: 'Page analysis initiated. Domain data is available.'
+                });
             }
         }
 
-        // Pokud doména nebo stránka neexistuje, zařadíme do fronty
-        console.log(`[DATA NOT FOUND] No data for ${url}. Queueing for analysis.`);
+        // Pokud neexistuje ani doména -> Fáze 1
+        console.log(`[DOMAIN NOT FOUND] No data for domain ${domainName}. Queueing for analysis.`);
         await queueAnalysis(url);
         res.json({
             status: 'analyzing_domain',

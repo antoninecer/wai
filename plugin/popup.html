@@ -5,21 +5,142 @@
     <title>Web Aura Index</title>
     <style>
         body {
-            width: 350px;
-            font-family: sans-serif;
+            width: 380px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            background-color: #f9f9f9;
         }
-        pre {
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+        .container {
+            padding: 10px;
         }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-button.active {
+            border-bottom: 2px solid #007bff;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .setting {
+            margin-bottom: 15px;
+        }
+        .setting label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .setting input[type="text"], .setting textarea {
+            width: 95%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .setting textarea {
+            resize: vertical;
+            min-height: 40px;
+        }
+        .setting input[type="range"] {
+            width: 100%;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input { display: none; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px; width: 16px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #2196F3; }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body>
-    <h3>WAI - Debug Log</h3>
-    <div id="debug-output" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; font-family: monospace; font-size: 12px;">
-        <p>Popup otevřen...</p>
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" data-tab="analysis">Analýza</button>
+            <button class="tab-button" data-tab="settings">Nastavení</button>
+            <button class="tab-button" data-tab="debug">Debug</button>
+        </div>
+
+        <div id="analysis" class="tab-content active">
+            <p>Zde se brzy zobrazí vizuální analýza aury...</p>
+            <!-- Zde bude dynamicky generovaná hvězda a kruh -->
+        </div>
+
+        <div id="settings" class="tab-content">
+            <div class="setting">
+                <label for="interests">Moje Zájmy (oddělené čárkou)</label>
+                <textarea id="interests" rows="2"></textarea>
+            </div>
+            <div class="setting">
+                <label for="exclusions">Vyloučit Témata (oddělené čárkou)</label>
+                <textarea id="exclusions" rows="2"></textarea>
+            </div>
+            <div class="setting">
+                <label for="auraIntensity">Intenzita Aury Odkazů</label>
+                <input type="range" id="auraIntensity" min="10" max="100" value="80">
+            </div>
+            <div class="setting">
+                <label>Pergamenový Efekt</label>
+                <label class="switch">
+                    <input type="checkbox" id="parchmentEffect">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting">
+                <label>Aura Tlačítek</label>
+                <label class="switch">
+                    <input type="checkbox" id="buttonAuras">
+                    <span class="slider"></span>
+                </label>
+            </div>
+             <div class="setting">
+                <label>Debug Log</label>
+                <label class="switch">
+                    <input type="checkbox" id="debugLog" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <button id="saveSettings">Uložit Nastavení</button>
+        </div>
+
+        <div id="debug" class="tab-content">
+            <div id="debug-output" style="height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; font-family: monospace; font-size: 12px; background: #fff;">
+                <p>Popup otevřen...</p>
+            </div>
+        </div>
     </div>
     
     <script src="popup.js"></script>
