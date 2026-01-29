@@ -1,0 +1,49 @@
+# Ignorovat soubory s citlivými proměnnými prostředí
+/.env
+
+# Ignorovat Node.js závislosti
+node_modules/
+
+# Ignorovat logy a dočasné soubory
+*.log
+npm-debug.log*
+
+# Ignorovat build a dist adresáře
+build/
+dist/
+
+# Ignorovat Docker dočasné soubory
+.dockerignore
+
+# Ignorovat Docker compose soubory pro konkrétní prostředí (pokud budou existovat)
+docker-compose.override.yml
+
+# Ignorovat zálohy a komprimované soubory
+*.bak
+*.zip
+*.tar
+
+# Ignorovat lokální IDE soubory (Visual Studio Code např.)
+.vscode/
+
+# Ignore frontend specific files
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/package-lock.json
+
+# Ignore api specific files
+api/node_modules/
+api/.env
+api/package-lock.json
+
+# Ignore worker specific files
+worker/node_modules/
+worker/.env
+worker/package-lock.json
+
+# Ignorovat macOS specifické soubory
+.DS_Store
+
+# Ignorovat soubory specifické pro Gemini CLI
+.gemini/
