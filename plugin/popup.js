@@ -23,7 +23,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         const userId = await getUserId();
 
         // Zde budeme posílat data na naše API
-        const apiEndpoint = 'http://api.wai.ventureout.cz/analyze'; // Používáme http, Traefik to přesměruje
+        const apiEndpoint = 'https://api.wai.ventureout.cz/analyze'; // Používáme https, Nginx to očekává
 
         const requestBody = {
           ...response.data, // Data z content.js
