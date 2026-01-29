@@ -1,3 +1,5 @@
+const debugOutput = document.getElementById('debug-output');
+
 // Function for logging to the popup window with a timestamp
 function log(message, data = null) {
   const time = new Date().toLocaleTimeString();
