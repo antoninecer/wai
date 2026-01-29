@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "Web Aura Index",
+    "version": "0.1.0",
+    "description": "Provides an instinctive orientation in the digital space.",
+    "permissions": ["activeTab", "scripting"],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "js": ["content.js"]
+        }
+    ]
+}
