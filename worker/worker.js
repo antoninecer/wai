@@ -88,6 +88,7 @@ async function processUrl(url) {
 
 
             // Pokud je odkaz interní a ještě nebyl zpracován, přidej ho do fronty
+            /*
             if (link.isInternal) {
                 const isMember = await redisClient.sIsMember(PROCESSED_SET_NAME, link.url);
                 if (!isMember) {
@@ -95,6 +96,7 @@ async function processUrl(url) {
                     await redisClient.lPush(ANALYSIS_QUEUE_NAME, link.url);
                 }
             }
+            */
         }
         
         // --- Ukončení transakce ---
