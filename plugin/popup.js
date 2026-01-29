@@ -1,62 +1,90 @@
-// Tento skript se spustí, když se otevře popup okno.
+// Globální reference na debugovací okno
+const debugOutput = document.getElementById('debug-output');
+
+// Funkce pro logování do popup okna
+function logToPopup(message, isJson = false) {
+  const logEntry = document.createElement('p');
+  if (isJson) {
+    logEntry.textContent = JSON.stringify(message, null, 2);
+    logEntry.style.whiteSpace = 'pre-wrap';
+  } else {
+    logEntry.textContent = message;
+  }
+  debugOutput.appendChild(logEntry);
+  // Automaticky scrolluje dolů
+  debugOutput.scrollTop = debugOutput.scrollHeight;
+}
 
 // Funkce pro získání nebo vygenerování userId
 async function getUserId() {
   let { userId } = await chrome.storage.local.get('userId');
   if (!userId) {
-    userId = crypto.randomUUID(); // Generujeme unikátní ID
+    logToPopup('Generuji nové userId...');
+    userId = crypto.randomUUID();
     await chrome.storage.local.set({ userId });
   }
   return userId;
 }
 
-// Najdeme aktivní kartu v prohlížeči.
-chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-  // Pošleme zprávu skriptu content.js, který běží na této kartě.
-  chrome.tabs.sendMessage(tabs[0].id, { greeting: "dejMiData" }, async function (response) {
-    const debugOutput = document.getElementById('debug-output');
+// Hlavní logika
+async function main() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    logToPopup('Žádám data z content scriptu...');
     
-    if (response && response.data) {
-      debugOutput.textContent = 'Odesílám data na API...';
+    const response = await chrome.tabs.sendMessage(tabs[0].id, { greeting: "dejMiData" });
 
-      try {
-        const userId = await getUserId();
-
-        // Zde budeme posílat data na naše API
-        const apiEndpoint = 'https://api.wai.ventureout.cz/analyze'; // Používáme https, Nginx to očekává
-
-        const requestBody = {
-          ...response.data, // Data z content.js
-          userId: userId,
-          preferences: { // Prozatím statická data, v budoucnu z options.js
-            interests: ["web development", "AI", "data science"],
-            exclusions: ["gossip", "clickbait"],
-            auraIntensity: 0.8
-          }
-        };
-
-        // Zobrazíme, co se chystáme odeslat
-        debugOutput.textContent = 'Odesílám následující data na API:\n' + JSON.stringify(requestBody, null, 2);
-
-        const apiResponse = await fetch(apiEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        const responseJson = await apiResponse.json();
-        debugOutput.textContent = 'Odpověď z API:\n' + JSON.stringify(responseJson, null, 2);
-
-      } catch (error) {
-        console.error('Chyba při komunikaci s API:', error);
-        debugOutput.textContent = 'Chyba při komunikaci s API: ' + error.message;
-      }
-
-    } else {
-      // Pokud se něco pokazilo a nedostali jsme odpověď z content.js.
-      debugOutput.textContent = 'Nepodařilo se načíst data ze stránky. Zkuste ji obnovit a otevřít popup znovu.';
+    if (!response || !response.data) {
+      logToPopup('Chyba: Nedostala se odpověď z content scriptu.');
+      return;
     }
-  });
-});
+    
+    logToPopup('Data z content scriptu přijata.');
+    const lightAnalysisData = response.data;
+    
+    const userId = await getUserId();
+    logToPopup(`Používám userId: ${userId}`);
+
+    const apiEndpoint = 'https://api.wai.ventureout.cz/analyze';
+    
+    const requestBody = {
+      ...lightAnalysisData,
+      userId: userId,
+      preferences: {
+        interests: ["web development", "AI", "data science"],
+        exclusions: ["gossip", "clickbait"],
+        auraIntensity: 0.8
+      }
+    };
+
+    logToPopup('Odesílám následující data na API:');
+    logToPopup(requestBody, true);
+
+    const apiResponse = await fetch(apiEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    logToPopup(`Odpověď z API (status: ${apiResponse.status})`);
+    
+    const responseText = await apiResponse.text();
+    
+    try {
+      // Zkusíme parsovat jako JSON
+      const responseJson = JSON.parse(responseText);
+      logToPopup('Odpověď z API (JSON):');
+      logToPopup(responseJson, true);
+    } catch (e) {
+      // Pokud to není JSON, zobrazíme jako text
+      logToPopup('Chyba: Odpověď z API není validní JSON. Zobrazuji jako text:');
+      logToPopup(responseText);
+    }
+
+  } catch (error) {
+    logToPopup('Došlo k závažné chybě: ' + error.message);
+    console.error(error);
+  }
+}
+
+main();
