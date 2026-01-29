@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const { createClient } = require('redis');
 
 const app = express();
 app.use(cors());
@@ -12,6 +13,13 @@ app.use(express.json());
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
+
+// Nastavení připojení k Redis
+const redisClient = createClient({
+  url: process.env.REDIS_URL
+});
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
+redisClient.connect();
 
 app.get('/', (req, res) => {
   res.send('Web Aura Index API is running!');
@@ -37,15 +45,17 @@ app.post('/analyze', async (req, res) => {
         auraMap: result.rows[0].aura_map,
       });
     } else {
-      // Záznam nenalezen, vracíme placeholder odpověď
-      console.log(`No aura map found for ${url}. Initiating analysis.`);
+      // Záznam nenalezen, přidáme úkol do fronty v Redisu
+      console.log(`No aura map found for ${url}. Queueing for analysis.`);
+      await redisClient.lPush('analysis_queue', url);
+      
       res.json({
         status: 'analyzing_domain',
         message: 'Domain analysis initiated. Check back later for full Aura map.'
       });
     }
   } catch (err) {
-    console.error('Database query error', err.stack);
+    console.error('Database or Redis error', err.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
