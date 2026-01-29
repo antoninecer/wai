@@ -103,13 +103,16 @@ async function main() {
       const responseJson = JSON.parse(responseText);
       log('API response (parsed JSON):', responseJson);
 
-      if (responseJson.status === 'completed' && responseJson.auraMap) {
-        log('Aura Map received for current page:', responseJson.auraMap);
-        // Posíláme Aura Mapu zpět do content scriptu pro vizualizaci
-        chrome.tabs.sendMessage(tabs[0].id, { type: "AURA_MAP_UPDATE", auraMap: responseJson.auraMap });
+      if (responseJson.status === 'completed') {
+        log('Aura data received:', { domainAura: responseJson.domainAura, pageAura: responseJson.pageAura });
+        // Posíláme Aura data zpět do content scriptu pro vizualizaci
+        chrome.tabs.sendMessage(tabs[0].id, { 
+            type: "AURA_DATA_UPDATE", 
+            domainAura: responseJson.domainAura,
+            pageAura: responseJson.pageAura 
+        });
       } else if (responseJson.status === 'analyzing_domain') {
-        log('Analysis for this domain is in progress. Please check back shortly.', responseJson.message);
-        // Můžeme také poslat zprávu do content scriptu, aby případně zešedl ikonu
+        log('Analysis for this domain is in progress.', responseJson.message);
         chrome.tabs.sendMessage(tabs[0].id, { type: "ANALYSIS_IN_PROGRESS" });
       } else {
         log('Unexpected API response status.', responseJson);

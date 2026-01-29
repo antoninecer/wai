@@ -19,12 +19,15 @@ chrome.runtime.onMessage.addListener(
 
       // Pošleme odpověď zpět tomu, kdo se ptal (popup.js)
       sendResponse({ data: collectedData });
-    } else if (request.type === "AURA_MAP_UPDATE") {
-      console.log("Content script received Aura Map update:", request.auraMap);
-      applyAuraToLinks(request.auraMap.links, request.auraMap.circle.color);
+    } else if (request.type === "AURA_DATA_UPDATE") {
+      console.log("Content script received Aura data:", { domainAura: request.domainAura, pageAura: request.pageAura });
+      if (request.pageAura && request.pageAura.links) {
+        applyAuraToLinks(request.pageAura.links);
+      }
+      // TODO: Zde v budoucnu nastavíme barvu ikony podle request.domainAura
     } else if (request.type === "ANALYSIS_IN_PROGRESS") {
       console.log("Content script received ANALYSIS_IN_PROGRESS message.");
-      // Zde bychom v budoucnu mohli zešednout ikonu pluginu
+      // TODO: Zde v budoucnu zešedneme ikonu pluginu
     }
   }
 );
