@@ -1,31 +1,13 @@
 services:
-  traefik:
-    image: "traefik:v2.10"
-    container_name: "wai-traefik"
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-    ports:
-      - "127.0.0.1:8005:80"      # Externí port pro Nginx
-      - "127.0.0.1:8080:8080"    # Dashboard Traefiku pro správu
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    networks:
-      - webnet
-
   api:
     build: ./api
     container_name: "wai-api"
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
     environment:
       - DATABASE_URL=postgresql://user:password@postgres:5432/wai
       - REDIS_URL=redis://redis:6379
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.wai.ventureout.cz`)"
-      - "traefik.http.routers.api.entryPoints=web"
     depends_on:
       - postgres
       - redis
@@ -37,10 +19,8 @@ services:
     build: ./frontend
     container_name: "wai-frontend"
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`app.wai.ventureout.cz`)"
-      - "traefik.http.routers.frontend.entryPoints=web"
+    ports:
+      - "127.0.0.1:8080:80"
     networks:
       - webnet
 
