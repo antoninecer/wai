@@ -365,6 +365,38 @@ function renderAnalysis(data) {
         }
     });
 
+    // OBNOVENO: Přidání interaktivity pro zobrazení struktury obsahu
+    document.getElementById('toggle-structure').addEventListener('click', (e) => {
+        e.preventDefault();
+        const structureContainer = document.getElementById('structure-container');
+        if (structureContainer.style.display === 'none') {
+            let structureHtml = '<h4>Struktura nadpisů:</h4>';
+            content_map.headings.forEach(h => {
+                const padding = (parseInt(h.level.charAt(1)) - 1) * 10;
+                structureHtml += `<p style="font-size: 11px; margin: 2px 0; padding-left: ${padding}px;"><strong>${h.level.toUpperCase()}:</strong> ${h.text.substring(0, 50)}...</p>`;
+            });
+            structureContainer.innerHTML = structureHtml;
+            structureContainer.style.display = 'block';
+            e.target.textContent = 'Skrýt strukturu obsahu';
+        } else {
+            structureContainer.style.display = 'none';
+            e.target.textContent = 'Zobrazit strukturu obsahu';
+        }
+    });
+
+    log('Analysis render complete.');
+    
+    // Zobrazíme tlačítko pro re-analýzu
+    const reanalyzeBtn = document.getElementById('reanalyze-button');
+    if (reanalyzeBtn) {
+        reanalyzeBtn.style.display = 'block';
+        reanalyzeBtn.textContent = chrome.i18n.getMessage("reanalyzeButton");
+        reanalyzeBtn.onclick = () => { 
+            reanalyzeBtn.textContent = chrome.i18n.getMessage("requestSent");
+            runAnalysis(true); 
+        };
+    }
+
     // ... (zbytek kódu pro strukturu obsahu a re-analýzu zůstává stejný) ...
 }async function getUserId() {
     try {
