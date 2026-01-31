@@ -2,7 +2,8 @@
     "manifest_version": 3,
     "name": "Web Aura Index",
     "version": "0.1.0",
-    "description": "Provides an instinctive orientation in the digital space.",
+    "description": "__MSG_appDesc__",
+    "default_locale": "en",
     "permissions": ["activeTab", "scripting", "storage", "action", "contextMenus"],
     "host_permissions": ["*://api.wai.ventureout.cz/*"],
     "action": {
