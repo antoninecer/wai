@@ -1,63 +1,68 @@
 # WAI - Gemini Development Plan
 
-Tento dokument slouží jako hlavní referenční bod pro vývoj Web Aura Indexu (WAI). Zachycuje naši finální vizi, architekturu a aktuální stav projektu.
+Tento dokument slouží jako hlavní referenční bod pro vývoj Web Aura Indexu (WAI). Zachycuje naši finální vizi, architekturu a dohodnuté funkce.
 
-## 1. Velká Vize
+## 1. Finální Vize: Intuitivní Kompas
 
-Web Aura Index (WAI) není jen nástroj pro hodnocení jedné stránky. Je to systém pro pochopení **charakteru, integrity a sémantické mapy celého webu jako živého organismu**. Cílem je poskytnout uživatelům okamžitý vhled do kvality a úmyslu digitálního prostoru, ve kterém se pohybují, a to na základě dat, nikoliv jen dojmů. Systém musí být od základu **jazykově agnostický**.
+Cílem je vytvořit **intuitivní kompas**, nikoli technický dashboard. Plugin má uživateli poskytnout okamžitý, pocitový vhled do charakteru webové stránky a celé domény, a to prostřednictvím elegantního a živého vizuálního jazyka.
 
-## 2. Architektura
+### 1.1. Fázová Ikona: Živá Zpětná Vazba
 
-Systém je postaven na dvoufázové, asynchronní analýze, aby byla zajištěna okamžitá odezva pro uživatele a zároveň umožněna komplexní hloubková analýza na pozadí.
+Ikona pluginu je **dvojitý kruh**, který komunikuje stav analýzy ve třech fázích:
 
-### Fáze 1: Okamžitá Aura Stránky
-- **Cíl:** Poskytnout uživateli odpověď do pár sekund.
-- **Proces:** API přijme požadavek na analýzu konkrétní URL. Pokud pro ni existují čerstvá data, okamžitě je vrátí. Pokud ne, zařadí úkol do Redis fronty a odpoví statusem `analyzing_domain`.
+*   **Vnitřní kruh:** Reprezentuje auru **aktuální stránky**.
+*   **Vnější kruh:** Reprezentuje celkovou auru celé **domény**.
 
-### Fáze 2: Hloubková Aura Celého Webu (Crawlování)
-- **Cíl:** Postupně a autonomně zmapovat a zanalyzovat celý web.
-- **Proces:** Worker na pozadí zpracovává úkoly z Redis fronty. Pro každou URL stáhne její obsah, analyzuje její auru a sémantickou mapu, a uloží výsledek do databáze. Poté identifikuje všechny nové, dosud neanalyzované **interní odkazy** a přidá je jako nové úkoly zpět do fronty. Tímto způsobem se postupně "prokouše" celým webem.
+**Fáze 1: Zjišťování (Nová stránka)**
+*   **Vizuál:** Šedivý dvojkruh s **otazníkem `?`** uprostřed.
+*   **Význam:** "Právě provádím rychlou lokální analýzu této stránky."
+*   **Tooltip:** "Zjišťuji auru stránky..."
 
-### Udržování Čerstvosti Dat
-- Záznamy v databázi budou mít časové razítko (`last_analyzed`).
-- Pokud API obdrží požadavek na data starší než **30 dní** (konfigurovatelné), vrátí stará data, ale zároveň zařadí úkol na přeanalyzování do fronty.
-- Databáze bude uchovávat **poslední 4 snímky** každé domény, aby bylo možné sledovat její vývoj v čase. Starší záznamy se budou mazat (samočistící mechanismus).
+**Fáze 2: Náhled Stránky (Lokální analýza hotova)**
+*   **Vizuál:** Otazník zmizí. **Vnitřní kruh** se obarví. Vnější zůstává šedý.
+*   **Význam:** "Mám první dojem z této konkrétní stránky."
+*   **Tooltip:** "Aura stránky: [Barva - Úmysl]"
 
-## 3. Databázové Schéma (PostgreSQL)
+**Fáze 3: Kompletní Obraz (Data ze serveru dorazila)**
+*   **Vizuál:** **Vnější kruh** se také obarví. Ikona je kompletní.
+*   **Význam:** "Mám kompletní obrázek o stránce i celé doméně."
+*   **Tooltip:** "Aura stránky: [Barva], Aura domény: [Barva]"
 
-Pro zajištění rychlosti a budoucího vyhledávání použijeme normalizovanou strukturu se 4 hlavními tabulkami.
+### 1.2. Chytré Zobrazování Aur
 
-- **`domains`**: Uchovává celkovou auru pro celou doménu.
-  - `id`, `domain_name`, `last_analyzed`, `overall_aura_circle`, `overall_aura_star`
-- **`pages`**: Uchovává data o každé jednotlivé stránce.
-  - `id`, `domain_id`, `url`, `title`, `meta_description`, `page_aura_circle`, `page_aura_star`, `content_map` (JSONB pro sémantickou mapu)
-- **`links`**: Uchovává informace o každém jednotlivém odkazu.
-  - `id`, `source_page_id`, `target_url`, `link_text`, `link_aura_circle`
-- **`page_topics`**: Indexovaná tabulka pro rychlé vyhledávání a našeptávač.
-  - `id`, `page_id`, `topic`
+*   **Podkreslení Aury Stránky ("Pergamenový Efekt"):**
+    *   **Funkce:** Po dokončení Fáze 2 se na pozadí stránky aplikuje velmi jemné, volitelné podbarvení nebo textura v barvě dominantní aury stránky.
+    *   **Cíl:** Uživatel instinktivně "cítí" atmosféru stránky.
 
-## 4. Funkcionalita Pluginu
+*   **Aura Interaktivních Prvků (Tlačítka, CTA):**
+    *   **Funkce:** Systém se pokusí rozpoznat účel tlačítek a odkazů (např. "Koupit", "Kontakt") a přiřadit jim specifickou barvu aury (např. 🟡 pro nákup, 🟢 pro kontakt).
+    *   **Cíl:** Vizuální nápověda o tom, co daný prvek po uživateli chce.
 
-- **Aura Odkazů:** Zobrazí "nenápadné barevné záření" okolo odkazů přímo na stránce pomocí `text-shadow`. Barva odpovídá auře cílové URL.
-- **Ikona Pluginu:** Barva ikony v liště prohlížeče bude odpovídat stabilní, celkové auře **domény**.
-- **Kontextové Menu (Budoucí):** Pravé tlačítko na odkazu zobrazí detailní auru cílové stránky (hvězdu, kruh, klíčová témata).
+*   **Načasování Obarvení Odkazů:**
+    *   Aury jednotlivých odkazů na stránce se zobrazí až po dokončení **Fáze 3**, kdy jsou k dispozici data ze serveru.
 
-## 5. Funkcionalita Vyhledávání (Budoucí)
+### 1.3. Přehledný Popup
 
-- Webové rozhraní bude obsahovat vyhledávací pole s **našeptávačem**.
-- Při psaní bude v reálném čase prohledávat indexovanou tabulku `page_topics` a nabízet relevantní témata a stránky napříč všemi analyzovanými doménami.
+Popup bude rozdělen do záložek pro maximální přehlednost:
 
----
-## **AKTUÁLNÍ STAV (29. ledna 2026)**
+*   **Analýza:** Zobrazí velký dvojkruh, sedmicípou hvězdu pro stránku a slovní hodnocení.
+*   **Nastavení:** Umožní uživateli personalizovat si zážitek.
+*   **Hledat:** Umožní prohledávat již zaindexovaný obsah.
 
-- **Co je hotové:**
-    - Základní komunikace `Plugin -> API -> Worker` přes Redis frontu.
-    - Worker umí stáhnout a naparsovat jednu stránku, extrahovat odkazy a uložit výsledek.
-    - Plugin umí vizualizovat aury odkazů na stránce.
-- **Co se děje teď:**
-    - **FÁZE: Přestavba databáze.**
-    - **ÚKOL:** Zahazujeme starý model s jedním JSONB a implementujeme nové, normalizované schéma se 4 tabulkami (`domains`, `pages`, `links`, `page_topics`).
-- **Co bude následovat:**
-    1.  Upravit `worker.js`, aby ukládal data do nové struktury.
-    2.  Implementovat v `worker.js` logiku pro rekurzivní crawlování (přidávání nových interních odkazů do fronty).
-    3.  Upravit `plugin`, aby správně pracoval s novou, detailnější strukturou dat z API.
+## 2. Plán Implementace
+
+1.  **Založení `GEMINI_PLAN.md`:** Vytvoření tohoto souboru. (HOTOVO)
+2.  **Implementace Uživatelského Nastavení (Settings):**
+    *   Vytvoření UI v `popup.html` pro nastavení.
+    *   Přidání přepínačů: Debug Log, Pergamenový Efekt, Aura Tlačítek.
+    *   Přidání posuvníku: Intenzita Aury Odkazů.
+    *   Přidání textových polí: Moje Zájmy, Vyloučená Témata.
+    *   Propojení s `chrome.storage.local`.
+3.  **Implementace Fázové Ikony:**
+    *   Vytvoření sady ikon a logiky v `background` skriptu pro jejich dynamickou změnu.
+4.  **Implementace "Pergamenového Efektu":**
+    *   Vytvoření logiky v `content.js` pro vložení a obarvení overlaye na pozadí stránky.
+5.  **Implementace Aury Tlačítek (Pokročilé):**
+    *   Vytvoření heuristické funkce v `content.js` pro rozpoznávání a barvení tlačítek.
+6.  **Implementace Vyhledávání (Budoucí):**
+    *   Vytvoření UI a propojení s novým API endpointem `/search`.

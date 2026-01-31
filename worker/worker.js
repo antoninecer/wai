@@ -88,15 +88,14 @@ async function processUrl(url) {
 
 
             // Pokud je odkaz interní a ještě nebyl zpracován, přidej ho do fronty
-            /*
             if (link.isInternal) {
-                const isMember = await redisClient.sIsMember(PROCESSED_SET_NAME, link.url);
+                const normalizedUrl = link.url.split('#')[0];
+                const isMember = await redisClient.sIsMember(PROCESSED_SET_NAME, normalizedUrl);
                 if (!isMember) {
-                    await redisClient.sAdd(PROCESSED_SET_NAME, link.url);
-                    await redisClient.lPush(ANALYSIS_QUEUE_NAME, link.url);
+                    await redisClient.sAdd(PROCESSED_SET_NAME, normalizedUrl);
+                    await redisClient.lPush(ANALYSIS_QUEUE_NAME, normalizedUrl);
                 }
             }
-            */
         }
         
         // --- Ukončení transakce ---

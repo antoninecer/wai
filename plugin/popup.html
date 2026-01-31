@@ -89,54 +89,21 @@
 <body>
     <div class="container">
         <div class="tabs">
-            <button class="tab-button active" data-tab="analysis">Analýza</button>
+            <button class="tab-button" data-tab="analysis">Analýza</button>
             <button class="tab-button" data-tab="settings">Nastavení</button>
-            <button class="tab-button" data-tab="debug">Debug</button>
+            <button class="tab-button active" data-tab="debug">Debug</button>
         </div>
 
-        <div id="analysis" class="tab-content active">
+        <div id="analysis" class="tab-content">
             <p>Zde se brzy zobrazí vizuální analýza aury...</p>
             <!-- Zde bude dynamicky generovaná hvězda a kruh -->
         </div>
 
         <div id="settings" class="tab-content">
-            <div class="setting">
-                <label for="interests">Moje Zájmy (oddělené čárkou)</label>
-                <textarea id="interests" rows="2"></textarea>
-            </div>
-            <div class="setting">
-                <label for="exclusions">Vyloučit Témata (oddělené čárkou)</label>
-                <textarea id="exclusions" rows="2"></textarea>
-            </div>
-            <div class="setting">
-                <label for="auraIntensity">Intenzita Aury Odkazů</label>
-                <input type="range" id="auraIntensity" min="10" max="100" value="80">
-            </div>
-            <div class="setting">
-                <label>Pergamenový Efekt</label>
-                <label class="switch">
-                    <input type="checkbox" id="parchmentEffect">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="setting">
-                <label>Aura Tlačítek</label>
-                <label class="switch">
-                    <input type="checkbox" id="buttonAuras">
-                    <span class="slider"></span>
-                </label>
-            </div>
-             <div class="setting">
-                <label>Debug Log</label>
-                <label class="switch">
-                    <input type="checkbox" id="debugLog" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <button id="saveSettings">Uložit Nastavení</button>
+            <!-- ... obsah nastavení ... -->
         </div>
 
-        <div id="debug" class="tab-content">
+        <div id="debug" class="tab-content active">
             <div id="debug-output" style="height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; font-family: monospace; font-size: 12px; background: #fff;">
                 <p>Popup otevřen...</p>
             </div>
