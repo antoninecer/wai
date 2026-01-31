@@ -13,6 +13,7 @@
     "settingsPreviewOff": { "message": "never" },
     "settingsDebugLabel": { "message": "Enable Debug Logging" },
     "settingsSaveButton": { "message": "Save Settings" },
+    "settingsSaveButtonSuccess": { "message": "Saved!" },
     "settingsShowLegend": { "message": "Show Color Legend" },
     "contextMenuTitle": { "message": "View Aura of Target" },
     "legendGreen": { "message": "Green: Intention of service - useful, open." },
@@ -22,5 +23,6 @@
     "legendRed": { "message": "Red: Intention of survival - crisis or outdated projects." },
     "legendGold": { "message": "Gold: Purity of intent - highest integrity." },
     "auraTargetTitle": { "message": "Target Aura" },
-    "auraTargetDefault": { "message": "Basic link aura." }
+    "auraTargetDefault": { "message": "Basic link aura." },
+    "reanalyzeButton": { "message": "Re-analyze" }
 }

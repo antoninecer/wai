@@ -22,61 +22,89 @@ const REVALIDATION_INTERVAL_DAYS = 30;
 app.get('/', (req, res) => res.send('Web Aura Index API is running!'));
 
 app.post('/analyze', async (req, res) => {
-    const { url } = req.body;
+    const { url, force_recrawl = false } = req.body;
     if (!url) return res.status(400).json({ error: 'URL is required' });
 
     try {
         const pageUrl = new URL(url);
         const domainName = pageUrl.hostname;
         const pagePath = pageUrl.pathname + pageUrl.search;
-
-        const { rows: [domain] } = await pool.query('SELECT * FROM domains WHERE domain_name = $1', [domainName]);
-
-        if (domain) {
-            // Zkontrolujeme stáří záznamu
-            const ageInDays = (new Date() - new Date(domain.last_analyzed)) / (1000 * 60 * 60 * 24);
-            if (ageInDays > REVALIDATION_INTERVAL_DAYS) {
-                console.log(`[DATA STALE] Domain ${domainName} is older than ${REVALIDATION_INTERVAL_DAYS} days. Queueing for re-analysis.`);
-                await queueAnalysis(url);
+        
+        // --- VYNUCENÁ RE-ANALÝZA ---
+        if (force_recrawl) {
+            console.log(`[FORCE RECRAWL] Request received for ${url}`);
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                const { rows: [page] } = await client.query('SELECT p.id, d.id as domain_id FROM pages p JOIN domains d ON p.domain_id = d.id WHERE d.domain_name = $1 AND p.url = $2', [domainName, pagePath]);
+                if (page) {
+                    // Smažeme staré odkazy a témata navázané na stránku
+                    await client.query('DELETE FROM links WHERE source_page_id = $1', [page.id]);
+                    await client.query('DELETE FROM page_topics WHERE page_id = $1', [page.id]);
+                    // Smažeme samotnou stránku
+                    await client.query('DELETE FROM pages WHERE id = $1', [page.id]);
+                    console.log(`[FORCE RECRAWL] Deleted old page data for page ID ${page.id}`);
+                }
+                await client.query('COMMIT');
+            } catch (e) {
+                await client.query('ROLLBACK');
+                console.error('[FORCE RECRAWL] Error during DB cleanup, rolling back.', e);
+            } finally {
+                client.release();
             }
+            
+            // Zařadíme úkol a vrátíme status, že analýza běží
+            await queueAnalysis(req.body); 
+            return res.json({ status: 'analyzing_forced', message: 'Forced re-analysis initiated.' });
+        }
+        
+        // --- STANDARDNÍ ZPRACOVÁNÍ S CACHE ---
+        const { rows: [domain] } = await pool.query('SELECT * FROM domains WHERE domain_name = $1', [domainName]);
+        if (domain) {
+            const { rows: [page] } = await pool.query(
+                `SELECT p.*,
+                 (SELECT json_agg(json_build_object('url', l.target_url, 'text', l.link_text, 'aura', l.link_aura_circle)) FROM links l WHERE l.source_page_id = p.id) as links
+                 FROM pages p WHERE p.domain_id = $1 AND p.url = $2`, [domain.id, pagePath]
+            );
 
-            // Najdeme data pro konkrétní stránku
-            const { rows: [page] } = await pool.query('SELECT * FROM pages WHERE domain_id = $1 AND url = $2', [domain.id, pagePath]);
             if (page) {
-                // ... (kód pro status 'completed' zůstává stejný)
-            } else {
-                // Data pro doménu máme, ale pro stránku ne -> Fáze 2
-                console.log(`[PAGE NOT FOUND] Data for page ${pagePath} not found. Queueing for analysis.`);
-                await queueAnalysis(url);
-                return res.json({
-                    status: 'analyzing_page',
+                // Máme čerstvá data, vrátíme je
+                 return res.json({
+                    status: 'completed',
                     domainAura: domain.overall_aura_circle,
-                    message: 'Page analysis initiated. Domain data is available.'
+                    pageAura: {
+                        star: page.page_aura_star,
+                        circle: page.page_aura_circle,
+                        content_map: page.content_map,
+                        links: page.links || []
+                    }
                 });
+            } else {
+                await queueAnalysis(req.body);
+                return res.json({ status: 'analyzing_page', domainAura: domain.overall_aura_circle });
             }
         }
 
-        // Pokud neexistuje ani doména -> Fáze 1
-        console.log(`[DOMAIN NOT FOUND] No data for domain ${domainName}. Queueing for analysis.`);
-        await queueAnalysis(url);
-        res.json({
-            status: 'analyzing_domain',
-            message: 'Domain analysis initiated. Check back later for full Aura map.'
-        });
+        // Pokud doména neexistuje
+        await queueAnalysis(req.body);
+        res.json({ status: 'analyzing_domain', message: 'Domain analysis initiated.' });
 
     } catch (err) {
-        console.error('[API ERROR] Database or Redis error', err.stack);
+        console.error('[API ERROR]', err.stack);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// --- Pomocné funkce ---
-async function queueAnalysis(url) {
-    // Přidáme URL do sady, abychom věděli, že je ve frontě, a zabránili duplicitám
+// Upravená funkce pro zařazení úkolu do fronty
+async function queueAnalysis(jobData) {
+    const url = jobData.url;
     const isMember = await redisClient.sIsMember(PROCESSED_SET_NAME, url);
-    if (!isMember) {
+    // Pokud není ve frontě NEBO pokud je to vynucená reanalýza, přidáme.
+    // (Při force_recrawl jsme starý záznam smazali, takže je to bezpečné)
+    if (!isMember || jobData.force_recrawl) {
         await redisClient.sAdd(PROCESSED_SET_NAME, url);
-        await redisClient.lPush(ANALYSIS_QUEUE_NAME, url);
+        // Do fronty vložíme celý objekt, nejen URL
+        await redisClient.lPush(ANALYSIS_QUEUE_NAME, JSON.stringify(jobData));
     }
 }
 

@@ -13,6 +13,7 @@
     "settingsPreviewOff": { "message": "nikdy" },
     "settingsDebugLabel": { "message": "Povolit logování pro ladění" },
     "settingsSaveButton": { "message": "Uložit nastavení" },
+    "settingsSaveButtonSuccess": { "message": "Uloženo!" },
     "settingsShowLegend": { "message": "Zobrazit vysvětlivky barev" },
     "contextMenuTitle": { "message": "Zobrazit Auru cíle" },
     "legendGreen": { "message": "Zelený: Úmysl služby - užitečnost, otevřenost." },
@@ -22,5 +23,6 @@
     "legendRed": { "message": "Červený: Úmysl přežití - krizové nebo zastaralé projekty." },
     "legendGold": { "message": "Zlatý: Čistota úmyslu - nejvyšší integrita." },
     "auraTargetTitle": { "message": "Aura Cíle" },
-    "auraTargetDefault": { "message": "Základní aura odkazu." }
+    "auraTargetDefault": { "message": "Základní aura odkazu." },
+    "reanalyzeButton": { "message": "Znovu analyzovat" }
 }
