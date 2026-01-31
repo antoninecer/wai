@@ -90,7 +90,7 @@ function setupUIListeners() {
 
     // Save settings button listener
     if (saveButton) {
-        saveButton.addEventListener('click', ()_=> {
+        saveButton.addEventListener('click', () => {
             saveSettings();
         });
     }
