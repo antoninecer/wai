@@ -349,7 +349,6 @@ function renderAnalysis(data) {
         }
     });
 
-    // OBNOVENO: Přidání interaktivity pro zobrazení struktury obsahu
     document.getElementById('toggle-structure').addEventListener('click', (e) => {
         e.preventDefault();
         const structureContainer = document.getElementById('structure-container');
