@@ -4,7 +4,7 @@
 chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "show-wai-aura",
-        title: "Zobrazit Auru cíle",
+        title: chrome.i18n.getMessage("contextMenuTitle"),
         contexts: ["link"] // Zobrazí se pouze při kliknutí pravým na odkaz
     });
 });
@@ -48,6 +48,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse({ status: "Icon updated" });
         }
         return true;
+    }
+});
+
+// Zde můžeme přidat další logiku, která běží na pozadí,
+// například kontrolu stavu při změně aktivního tabu.
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Počkáme, až se stránka kompletně načte
+    if (changeInfo.status === 'complete' && tab.url && (tab.url.startsWith('http:') || tab.url.startsWith('https:'))) {
+        // Pošleme zprávu do content scriptu, aby si zažádal o analýzu
+        chrome.tabs.sendMessage(tabId, { type: 'REQUEST_AURA_ANALYSIS' });
     }
 });
 

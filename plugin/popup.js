@@ -75,12 +75,8 @@ function setupUIListeners() {
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetTab = button.dataset.tab;
-
-            // Deactivate all tabs
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
-
-            // Activate the clicked tab
             button.classList.add('active');
             if (document.getElementById(targetTab)) {
                 document.getElementById(targetTab).classList.add('active');
@@ -89,9 +85,20 @@ function setupUIListeners() {
     });
 
     // Save settings button listener
+    const saveButton = document.getElementById('saveSettings');
     if (saveButton) {
-        saveButton.addEventListener('click', () => {
-            saveSettings();
+        saveButton.addEventListener('click', saveSettings);
+    }
+    
+    // Color legend toggle
+    const toggleLegend = document.getElementById('toggle-legend');
+    if(toggleLegend) {
+        toggleLegend.addEventListener('click', (e) => {
+            e.preventDefault();
+            const legendContainer = document.getElementById('color-legend-container');
+            if(legendContainer) {
+                legendContainer.style.display = legendContainer.style.display === 'none' ? 'block' : 'none';
+            }
         });
     }
 }
@@ -103,67 +110,78 @@ async function loadSettings() {
             interests: 'AI, programování, startupy',
             exclusions: 'rychlé půjčky, hazard',
             auraIntensity: 75,
-            parchmentEffect: true,
-            buttonAuras: true,
+            previewMethod: 'hover', // 'hover', 'context', or 'off'
             debugLog: true,
         };
         
-        // Merge stored settings with defaults
         window.settings = { ...defaultSettings, ...data.waiSettings };
 
-        // Populate UI - null check elements first
-        if (interestsEl) interestsEl.value = window.settings.interests;
-        if (exclusionsEl) exclusionsEl.value = window.settings.exclusions;
-        if (auraIntensityEl) auraIntensityEl.value = window.settings.auraIntensity;
-        if (parchmentEffectEl) parchmentEffectEl.checked = window.settings.parchmentEffect;
-        if (buttonAurasEl) buttonAurasEl.checked = window.settings.buttonAuras;
-        if (debugLogEl) debugLogEl.checked = window.settings.debugLog;
+        // Populate UI
+        document.getElementById('interests').value = window.settings.interests;
+        document.getElementById('exclusions').value = window.settings.exclusions;
+        document.getElementById('auraIntensity').value = window.settings.auraIntensity;
+        document.getElementById('debugLog').checked = window.settings.debugLog;
+        
+        const previewMethodEl = document.querySelector(`input[name="previewMethod"][value="${window.settings.previewMethod}"]`);
+        if (previewMethodEl) {
+            previewMethodEl.checked = true;
+        }
 
+        generateColorLegend();
         log('Settings loaded and UI populated.', window.settings);
 
     } catch (error) {
-        log('Error loading settings from chrome.storage.sync.', error);
-        // In case of error, use defaults
-        window.settings = {
-            debugLog: true,
-        };
+        log('Error loading settings.', error);
+        window.settings = { debugLog: true }; // Fallback
     }
 }
 
 async function saveSettings() {
     log('Attempting to save settings...');
     try {
+        const previewMethodEl = document.querySelector('input[name="previewMethod"]:checked');
         const newSettings = {
-            interests: interestsEl ? interestsEl.value : '',
-            exclusions: exclusionsEl ? exclusionsEl.value : '',
-            auraIntensity: auraIntensityEl ? auraIntensityEl.value : 75,
-            parchmentEffect: parchmentEffectEl ? parchmentEffectEl.checked : true,
-            buttonAuras: buttonAurasEl ? buttonAurasEl.checked : true,
-            debugLog: debugLogEl ? debugLogEl.checked : true,
+            interests: document.getElementById('interests').value,
+            exclusions: document.getElementById('exclusions').value,
+            auraIntensity: document.getElementById('auraIntensity').value,
+            previewMethod: previewMethodEl ? previewMethodEl.value : 'hover',
+            debugLog: document.getElementById('debugLog').checked,
         };
 
         await chrome.storage.sync.set({ waiSettings: newSettings });
         window.settings = newSettings;
-
         log('Settings successfully saved.', newSettings);
         
-        // Visual feedback
+        const saveButton = document.getElementById('saveSettings');
         if (saveButton) {
-            saveButton.textContent = 'Uloženo!';
-            setTimeout(() => { saveButton.textContent = 'Uložit nastavení'; }, 2000);
+            saveButton.textContent = chrome.i18n.getMessage("settingsSaveButtonSuccess") || 'Uloženo!';
+            setTimeout(() => { saveButton.textContent = chrome.i18n.getMessage("settingsSaveButton"); }, 2000);
+        }
+        
+        // Inform content script about the changes
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0] && tabs[0].id) {
+            chrome.tabs.sendMessage(tabs[0].id, { type: "SETTINGS_UPDATED", settings: newSettings });
         }
 
     } catch (error) {
-        log('Error saving settings to chrome.storage.sync.', error);
-        if (saveButton) {
-            saveButton.textContent = 'Chyba!';
-            saveButton.style.backgroundColor = 'red';
-            setTimeout(() => { 
-                saveButton.textContent = 'Uložit nastavení'; 
-                saveButton.style.backgroundColor = '';
-            }, 3000);
-        }
+        log('Error saving settings.', error);
     }
+}
+
+function generateColorLegend() {
+    const legendKeys = {
+        'Zelený': 'legendGreen', 'Žlutý': 'legendYellow', 'Modrý': 'legendBlue',
+        'Fialový': 'legendPurple', 'Červený': 'legendRed', 'Zlatý': 'legendGold'
+    };
+
+    let html = '<div id="color-legend-container" style="display:none; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">';
+    for (const [color, key] of Object.entries(legendKeys)) {
+        html += `<p style="font-size: 12px; margin: 2px 0;"><strong>${color}:</strong> ${chrome.i18n.getMessage(key)}</p>`;
+    }
+    html += '</div>';
+    
+document.getElementById('color-legend').insertAdjacentHTML('beforeend', html);
 }
 
 

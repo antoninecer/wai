@@ -103,7 +103,7 @@ async function processUrl(url, interests, exclusions) {
             const linkAura = generateLinkAura(link.url);
             await client.query(
                 'INSERT INTO links (source_page_id, target_url, link_text, link_aura_circle) VALUES ($1, $2, $3, $4)',
-                [pageId, link.url, link.text, linkAura.circle]
+                [pageId, link.url, link.text, linkAura] // Uložíme celý objekt aury
             );
 
 
@@ -305,13 +305,41 @@ function generatePageAura(contentMap, interests, exclusions) {
 
 function generateLinkAura(url) {
     const u = new URL(url);
-    let color = 'blue'; // Default pro interní/běžný odkaz
-    if (u.hostname.includes('facebook.') || u.hostname.includes('twitter.') || u.hostname.includes('linkedin.')) {
-        color = 'indigo'; // Sociální sítě
-    } else if (u.pathname.match(/\.(zip|pdf|exe|dmg)$/)) {
-        color = 'orange'; // Download
+    let color = 'blue';
+    let intent = 'Běžný interní odkaz.';
+
+    if (u.hostname !== new URL(process.env.ROOT_URL || 'http://default.com').hostname) {
+        intent = 'Odkaz na externí doménu.';
     }
-    return { circle: { color: color } };
+
+    if (u.hostname.includes('facebook.') || u.hostname.includes('twitter.') || u.hostname.includes('linkedin.') || u.hostname.includes('instagram.')) {
+        color = 'indigo';
+        intent = 'Odkaz na sociální síť.';
+    } else if (u.pathname.match(/\.(zip|pdf|exe|dmg|rar|tar\.gz)$/)) {
+        color = 'orange';
+        intent = 'Odkaz ke stažení souboru.';
+    } else if (u.hostname.includes('youtube.com') || u.hostname.includes('vimeo.com')) {
+        color = 'red';
+        intent = 'Odkaz na video platformu.';
+    }
+
+    // V budoucnu zde můžeme sáhnout do DB a zjistit, zda již cíl neznáme
+    // a vrátit jeho skutečnou auru. Prozatím vracíme odhad.
+    return { 
+        circle: { 
+            color: color,
+            intent: intent 
+        },
+        star: { // Placeholder hvězda pro vizualizaci
+            stability: { value: 50, saturation: 50 },
+            flow: { value: 50, saturation: 50 },
+            will: { value: 50, saturation: 50 },
+            relation: { value: 50, saturation: 50 },
+            voice: { value: 50, saturation: 50 },
+            meaning: { value: 50, saturation: 50 },
+            integrity: { value: 50, saturation: 50 },
+        }
+    };
 }
 
 main();

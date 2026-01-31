@@ -89,9 +89,9 @@
 <body>
     <div class="container">
         <div class="tabs">
-            <button class="tab-button" data-tab="analysis">Analýza</button>
-            <button class="tab-button" data-tab="settings">Nastavení</button>
-            <button class="tab-button active" data-tab="debug">Debug</button>
+            <button class="tab-button" data-tab="analysis">__MSG_tabAnalysis__</button>
+            <button class="tab-button" data-tab="settings">__MSG_tabSettings__</button>
+            <button class="tab-button active" data-tab="debug">__MSG_tabDebug__</button>
         </div>
 
         <div id="analysis" class="tab-content">
@@ -100,7 +100,39 @@
         </div>
 
         <div id="settings" class="tab-content">
-            <!-- ... obsah nastavení ... -->
+            <div class="setting">
+                <label for="interests">__MSG_settingsInterestsLabel__</label>
+                <textarea id="interests" rows="2"></textarea>
+            </div>
+            <div class="setting">
+                <label for="exclusions">__MSG_settingsExclusionsLabel__</label>
+                <textarea id="exclusions" rows="2"></textarea>
+            </div>
+            <div class="setting">
+                <label for="auraIntensity">__MSG_settingsAuraIntensityLabel__</label>
+                <input type="range" id="auraIntensity" min="10" max="100" value="75">
+            </div>
+            <div class="setting">
+                <label>__MSG_settingsPreviewMethodLabel__</label>
+                <div class="radio-group">
+                    <input type="radio" id="previewOnHover" name="previewMethod" value="hover" checked> <label for="previewOnHover">__MSG_settingsPreviewOnHover__</label><br>
+                    <input type="radio" id="previewOnContext" name="previewMethod" value="context"> <label for="previewOnContext">__MSG_settingsPreviewOnContext__</label><br>
+                    <input type="radio" id="previewOff" name="previewMethod" value="off"> <label for="previewOff">__MSG_settingsPreviewOff__</label>
+                </div>
+            </div>
+            <div class="setting">
+                <label for="debugLog">__MSG_settingsDebugLabel__</label>
+                <label class="switch">
+                    <input type="checkbox" id="debugLog">
+                    <span class="slider"></span>
+                </label>
+            </div>
+             <div class="setting">
+                <button id="saveSettings">__MSG_settingsSaveButton__</button>
+            </div>
+            <div class="setting" id="color-legend">
+                <a href="#" id="toggle-legend">__MSG_settingsShowLegend__</a>
+            </div>
         </div>
 
         <div id="debug" class="tab-content active">
