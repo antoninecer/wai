@@ -327,7 +327,15 @@ function renderAnalysis(data) {
                 <a href="#" id="toggle-star-details" style="font-size: 11px; color: #007bff;">[Zobrazit detaily hvězdy]</a>
             </div>
         </div>
-        // ... (zbytek HTML zůstává stejný) ...
+        <div id="star-details-container" style="display:none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;"></div>
+        <div style="margin-top: 15px;">
+            <strong>Klíčová témata:</strong>
+            <p style="font-size: 12px; color: #555;">${topics.join(', ')}</p>
+        </div>
+        <div style="margin-top: 10px;">
+             <a href="#" id="toggle-structure" style="font-size: 12px;">Zobrazit strukturu obsahu</a>
+        </div>
+        <div id="structure-container" style="display:none; margin-top: 5px; border-top: 1px solid #ddd; padding-top: 5px;"></div>
     `;
 
 // ... (kód pro `innerHTML` zůstává stejný) ...
