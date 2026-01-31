@@ -287,17 +287,72 @@ function renderAnalysis(data) {
         log('Rendered pending status.');
         return;
     }
-    // ... (zbytek funkce renderAnalysis) ...
+
+    // If analysis is complete, destructure from the correct object: pageAura
+    const { star: starData, circle: aura_circle, content_map } = data.pageAura;
+
+    const orderedRays = ['stability', 'flow', 'will', 'relation', 'voice', 'meaning', 'integrity'].map(key => {
+        const ray = starData[key];
+        return { score: ray ? ray.value : 0, confidence: ray ? ray.saturation / 100 : 0.5 };
+    });
+    
+    const topics = content_map.key_topics || [];
+    const explanation = { summary: aura_circle.intent || "Analýza dokončena." };
+
+    const createStarPath = (rays) => {
+        const points = [];
+        const centerX = 50, centerY = 50, numPoints = 7;
+        for (let i = 0; i < numPoints; i++) {
+            const score = rays[i].score / 100;
+            const angle = (i * 2 * Math.PI / numPoints) - (Math.PI / 2); 
+            const length = 5 + (score * 40); 
+            const x = centerX + length * Math.cos(angle);
+            const y = centerY + length * Math.sin(angle);
+            points.push(`${x},${y}`);
+        }
+        return points.join(' ');
+    };
+    
+    const starPoints = createStarPath(orderedRays);
+    const rayColors = ["#FF4136", "#FF851B", "#FFDC00", "#2ECC40", "#0074D9", "#B10DC9", "#FFFFFF"];
+
+    const starRays = orderedRays.map((ray, i) => {
+        const angle = (i * 2 * Math.PI / 7) - (Math.PI / 2);
+        const L = 5 + ((ray.score / 100) * 40);
+        const x2 = 50 + L * Math.cos(angle);
+        const y2 = 50 + L * Math.sin(angle);
+        return `<line x1="50" y1="50" x2="${x2}" y2="${y2}" stroke="${rayColors[i]}" stroke-width="2" opacity="${ray.confidence}" />`;
+    }).join('');
+
+    analysisContent.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="position: relative; width: 100px; height: 100px;">
+                <div style="position: absolute; top: 0; left: 0; width: 100px; height: 100px; border-radius: 50%; background-color: ${aura_circle.color}; opacity: 0.8;"></div>
+                <svg viewBox="0 0 100 100" style="position: relative; z-index: 1;">
+                    <polygon points="${starPoints}" fill="rgba(128, 128, 128, 0.5)" stroke="#FFFFFF" stroke-width="1" />
+                    ${starRays}
+                </svg>
+            </div>
+            <div>
+                <h3 style="margin: 0 0 5px 0;">Aura: ${aura_circle.intent || 'Neznámá'}</h3>
+                <p style="margin: 0; font-size: 13px;">${explanation.summary}</p>
+            </div>
+        </div>
+        <div style="margin-top: 15px;">
+            <strong>Klíčová témata:</strong>
+            <p style="font-size: 12px; color: #555;">${topics.join(', ')}</p>
+        </div>
+    `;
+    log('Analysis render complete.');
     
     // Zobrazíme tlačítko pro re-analýzu
     const reanalyzeBtn = document.getElementById('reanalyze-button');
     if (reanalyzeBtn) {
         reanalyzeBtn.style.display = 'block';
         reanalyzeBtn.textContent = chrome.i18n.getMessage("reanalyzeButton");
-        // Přidáme listener pouze jednou
-        reanalyzeBtn.onclick = () => {
+        reanalyzeBtn.onclick = () => { 
             reanalyzeBtn.textContent = chrome.i18n.getMessage("requestSent");
-            runAnalysis(true);
+            runAnalysis(true); 
         };
     }
 }async function getUserId() {
