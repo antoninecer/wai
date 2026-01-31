@@ -36,16 +36,41 @@ function rawLog(message, error = null) {
 document.addEventListener('DOMContentLoaded', () => {
     rawLog('DOM content loaded. Initializing popup...');
     try {
-        // Krok 1: Okamžitě připojíme listenery, aby UI nezamrzlo
+        localizeHtmlElements(); // Nově: lokalizace HTML elementů
         setupUIListeners();
         rawLog('UI listeners attached.');
-
-        // Krok 2: Spustíme zbytek inicializace
         initializeApp();
     } catch (e) {
         rawLog('A critical error occurred during initialization!', e);
     }
 });
+
+function localizeHtmlElements() {
+    document.title = chrome.i18n.getMessage("appName");
+    document.getElementById('tabAnalysisBtn').textContent = chrome.i18n.getMessage("tabAnalysis");
+    document.getElementById('tabSettingsBtn').textContent = chrome.i18n.getMessage("tabSettings");
+    document.getElementById('tabDebugBtn').textContent = chrome.i18n.getMessage("tabDebug");
+
+    document.getElementById('analysisPlaceholderText').textContent = chrome.i18n.getMessage("analysisPlaceholder");
+    document.getElementById('reanalyze-button').textContent = chrome.i18n.getMessage("reanalyzeButton");
+
+    document.getElementById('settingsInterestsLabel').textContent = chrome.i18n.getMessage("settingsInterestsLabel");
+    document.getElementById('settingsExclusionsLabel').textContent = chrome.i18n.getMessage("settingsExclusionsLabel");
+    document.getElementById('settingsAuraIntensityLabel').textContent = chrome.i18n.getMessage("settingsAuraIntensityLabel");
+    document.getElementById('settingsPreviewMethodLabel').textContent = chrome.i18n.getMessage("settingsPreviewMethodLabel");
+    document.getElementById('labelPreviewOnHover').textContent = chrome.i18n.getMessage("settingsPreviewOnHover");
+    document.getElementById('labelPreviewOnContext').textContent = chrome.i18n.getMessage("settingsPreviewOnContext");
+    document.getElementById('labelPreviewOff').textContent = chrome.i18n.getMessage("settingsPreviewOff");
+    document.getElementById('settingsDebugLabel').textContent = chrome.i18n.getMessage("settingsDebugLabel");
+    document.getElementById('saveSettings').textContent = chrome.i18n.getMessage("settingsSaveButton");
+    document.getElementById('toggle-legend').textContent = chrome.i18n.getMessage("settingsShowLegend");
+
+    // Inicializace textu pro reanalyze button (aby nebyl prázdný před analýzou)
+    const reanalyzeBtn = document.getElementById('reanalyze-button');
+    if (reanalyzeBtn) reanalyzeBtn.textContent = chrome.i18n.getMessage("reanalyzeButton");
+
+    rawLog('HTML elements localized.');
+}
 
 async function initializeApp() {
     rawLog('Loading settings...');
@@ -194,14 +219,14 @@ async function runAnalysis(force = false) {
     try {
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs.length === 0) {
-            analysisContent.innerHTML = '<p>Nelze najít aktivní kartu.</p>';
+            analysisContent.innerHTML = `<p>${chrome.i18n.getMessage("noActiveTab")}</p>`;
             return;
         }
         const tab = tabs[0];
         const url = tab.url;
 
         if (!url || (!url.startsWith('http:') && !url.startsWith('https:'))) {
-            analysisContent.innerHTML = `<p>Analýza pro tuto URL není podporována.</p>`;
+            analysisContent.innerHTML = `<p>${chrome.i18n.getMessage("analysisNotSupported")}</p>`;
             return;
         }
 
@@ -210,19 +235,20 @@ async function runAnalysis(force = false) {
 
     } catch (error) {
         log('Error in runAnalysis.', error);
+        analysisContent.innerHTML = `<p>${chrome.i18n.getMessage("analysisFailedGeneric")}</p>`;
     }
 }
 
 async function fetchAndDisplayAnalysis(url, userId, force = false) {
-    analysisContent.innerHTML = '<p>Analyzuji auru stránky...</p>';
+    analysisContent.innerHTML = `<p>${chrome.i18n.getMessage("analyzingPage")}</p>`;
     log(`Fetching analysis for ${url}, force: ${force}`);
 
     try {
         const response = await fetch('https://api.wai.ventureout.cz/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                url, 
+            body: JSON.stringify({
+                url,
                 userId,
                 interests: window.settings.interests,
                 exclusions: window.settings.exclusions,
@@ -238,7 +264,7 @@ async function fetchAndDisplayAnalysis(url, userId, force = false) {
         
         const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tabs[0] && tabs[0].id) {
-            chrome.tabs.sendMessage(tabs[0].id, { 
+            chrome.tabs.sendMessage(tabs[0].id, {
                 type: "AURA_DATA_UPDATE",
                 pageAura: data.pageAura,
                 domainAura: data.domainAura
@@ -246,11 +272,21 @@ async function fetchAndDisplayAnalysis(url, userId, force = false) {
         }
     } catch (error) {
         log('Error fetching analysis.', error);
-        analysisContent.innerHTML = `<p>Analýza selhala. Server vrátil chybu.</p>`;
+        analysisContent.innerHTML = `<p>${chrome.i18n.getMessage("analysisFailedApiError")}</p>`;
     }
 }
 
 function renderAnalysis(data) {
+    // If analysis is still pending on the server
+    if (data.status === 'pending' || data.status === 'in_progress' || !data.pageAura) {
+        analysisContent.innerHTML = `
+            <p>${chrome.i18n.getMessage("analysisInProgress")}</p>
+            <p><strong>${data.status || chrome.i18n.getMessage("statusWaiting")}</strong></p>
+            <p>${chrome.i18n.getMessage("tryAgainShort")}</p>
+        `;
+        log('Rendered pending status.');
+        return;
+    }
     // ... (zbytek funkce renderAnalysis) ...
     
     // Zobrazíme tlačítko pro re-analýzu
@@ -259,13 +295,12 @@ function renderAnalysis(data) {
         reanalyzeBtn.style.display = 'block';
         reanalyzeBtn.textContent = chrome.i18n.getMessage("reanalyzeButton");
         // Přidáme listener pouze jednou
-        reanalyzeBtn.onclick = () => { 
-            reanalyzeBtn.textContent = 'Požadavek odeslán...';
-            runAnalysis(true); 
+        reanalyzeBtn.onclick = () => {
+            reanalyzeBtn.textContent = chrome.i18n.getMessage("requestSent");
+            runAnalysis(true);
         };
     }
-}
-async function getUserId() {
+}async function getUserId() {
     try {
         const data = await chrome.storage.sync.get('userId');
         if (data.userId) {

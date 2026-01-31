@@ -4,6 +4,7 @@
     "tabAnalysis": { "message": "Analysis" },
     "tabSettings": { "message": "Settings" },
     "tabDebug": { "message": "Debug" },
+    "analysisPlaceholder": { "message": "Analysis will be displayed here soon..." },
     "settingsInterestsLabel": { "message": "Your Interests (keywords, comma-separated)" },
     "settingsExclusionsLabel": { "message": "Excluded Topics (anti-interests)" },
     "settingsAuraIntensityLabel": { "message": "Link Highlight Intensity" },
@@ -24,5 +25,13 @@
     "legendGold": { "message": "Gold: Purity of intent - highest integrity." },
     "auraTargetTitle": { "message": "Target Aura" },
     "auraTargetDefault": { "message": "Basic link aura." },
-    "reanalyzeButton": { "message": "Re-analyze" }
+    "reanalyzeButton": { "message": "Re-analyze" },
+    "noActiveTab": { "message": "No active tab found. Please try again." },
+    "analysisNotSupported": { "message": "Analysis is not supported for this URL." },
+    "analysisInProgress": { "message": "Page analysis is still in progress..." },
+    "statusWaiting": { "message": "waiting" },
+    "tryAgainShort": { "message": "Please try again shortly." },
+    "analysisFailedApiError": { "message": "Analysis failed. Server returned an error." },
+    "analysisFailedGeneric": { "message": "An error occurred during analysis." },
+    "requestSent": { "message": "Request sent..." }
 }

@@ -89,49 +89,50 @@
 <body>
     <div class="container">
         <div class="tabs">
-            <button class="tab-button" data-tab="analysis">__MSG_tabAnalysis__</button>
-            <button class="tab-button" data-tab="settings">__MSG_tabSettings__</button>
-            <button class="tab-button active" data-tab="debug">__MSG_tabDebug__</button>
+            <button class="tab-button" data-tab="analysis" id="tabAnalysisBtn"></button>
+            <button class="tab-button" data-tab="settings" id="tabSettingsBtn"></button>
+            <button class="tab-button active" data-tab="debug" id="tabDebugBtn"></button>
         </div>
 
         <div id="analysis" class="tab-content">
+            <p id="analysisPlaceholderText"></p>
             <!-- Zde bude dynamicky generovaná hvězda a kruh -->
-            <button id="reanalyze-button" style="display:none; margin-top: 10px;">Znovu analyzovat</button>
+            <button id="reanalyze-button" style="display:none; margin-top: 10px;"></button>
         </div>
 
         <div id="settings" class="tab-content">
             <div class="setting">
-                <label for="interests">__MSG_settingsInterestsLabel__</label>
+                <label for="interests" id="settingsInterestsLabel"></label>
                 <textarea id="interests" rows="2"></textarea>
             </div>
             <div class="setting">
-                <label for="exclusions">__MSG_settingsExclusionsLabel__</label>
+                <label for="exclusions" id="settingsExclusionsLabel"></label>
                 <textarea id="exclusions" rows="2"></textarea>
             </div>
             <div class="setting">
-                <label for="auraIntensity">__MSG_settingsAuraIntensityLabel__</label>
+                <label for="auraIntensity" id="settingsAuraIntensityLabel"></label>
                 <input type="range" id="auraIntensity" min="10" max="100" value="75">
             </div>
             <div class="setting">
-                <label>__MSG_settingsPreviewMethodLabel__</label>
+                <label id="settingsPreviewMethodLabel"></label>
                 <div class="radio-group">
-                    <input type="radio" id="previewOnHover" name="previewMethod" value="hover" checked> <label for="previewOnHover">__MSG_settingsPreviewOnHover__</label><br>
-                    <input type="radio" id="previewOnContext" name="previewMethod" value="context"> <label for="previewOnContext">__MSG_settingsPreviewOnContext__</label><br>
-                    <input type="radio" id="previewOff" name="previewMethod" value="off"> <label for="previewOff">__MSG_settingsPreviewOff__</label>
+                    <input type="radio" id="previewOnHover" name="previewMethod" value="hover" checked> <label for="previewOnHover" id="labelPreviewOnHover"></label><br>
+                    <input type="radio" id="previewOnContext" name="previewMethod" value="context"> <label for="previewOnContext" id="labelPreviewOnContext"></label><br>
+                    <input type="radio" id="previewOff" name="previewMethod" value="off"> <label for="previewOff" id="labelPreviewOff"></label>
                 </div>
             </div>
             <div class="setting">
-                <label for="debugLog">__MSG_settingsDebugLabel__</label>
+                <label for="debugLog" id="settingsDebugLabel"></label>
                 <label class="switch">
                     <input type="checkbox" id="debugLog">
                     <span class="slider"></span>
                 </label>
             </div>
              <div class="setting">
-                <button id="saveSettings">__MSG_settingsSaveButton__</button>
+                <button id="saveSettings"></button>
             </div>
             <div class="setting" id="color-legend">
-                <a href="#" id="toggle-legend">__MSG_settingsShowLegend__</a>
+                <a href="#" id="toggle-legend"></a>
             </div>
         </div>
 

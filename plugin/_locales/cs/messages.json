@@ -4,6 +4,7 @@
     "tabAnalysis": { "message": "Analýza" },
     "tabSettings": { "message": "Nastavení" },
     "tabDebug": { "message": "Debug" },
+    "analysisPlaceholder": { "message": "Zde se brzy zobrazí vizuální analýza aury..." },
     "settingsInterestsLabel": { "message": "Vaše zájmy (klíčová slova, oddělená čárkou)" },
     "settingsExclusionsLabel": { "message": "Vyloučená témata (anti-zájmy)" },
     "settingsAuraIntensityLabel": { "message": "Intenzita podsvícení odkazů" },
@@ -24,5 +25,13 @@
     "legendGold": { "message": "Zlatý: Čistota úmyslu - nejvyšší integrita." },
     "auraTargetTitle": { "message": "Aura Cíle" },
     "auraTargetDefault": { "message": "Základní aura odkazu." },
-    "reanalyzeButton": { "message": "Znovu analyzovat" }
+    "reanalyzeButton": { "message": "Znovu analyzovat" },
+    "noActiveTab": { "message": "Nelze najít aktivní kartu. Zkuste to prosím znovu." },
+    "analysisNotSupported": { "message": "Analýza pro tuto URL není podporována." },
+    "analysisInProgress": { "message": "Analýza této stránky stále probíhá..." },
+    "statusWaiting": { "message": "čeká se" },
+    "tryAgainShort": { "message": "Zkuste to prosím znovu za chvíli." },
+    "analysisFailedApiError": { "message": "Analýza selhala. Server vrátil chybu." },
+    "analysisFailedGeneric": { "message": "Došlo k chybě při analýze." },
+    "requestSent": { "message": "Požadavek odeslán..." }
 }
