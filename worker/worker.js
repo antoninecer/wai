@@ -18,21 +18,37 @@ async function main() {
     while (true) {
         try {
             const response = await redisClient.brPop(ANALYSIS_QUEUE_NAME, 0);
-            const urlToAnalyze = response.element;
+            const jobData = JSON.parse(response.element);
             
-            console.log(`[JOB START] Analyzing: ${urlToAnalyze}`);
-            await processUrl(urlToAnalyze);
+            // Zajistíme zpětnou kompatibilitu, pokud by ve frontě byl jen string
+            const urlToAnalyze = typeof jobData === 'string' ? jobData : jobData.url;
+            const userInterests = jobData.interests || '';
+            const userExclusions = jobData.exclusions || '';
+
+            console.log(`[JOB START] Analyzing: ${urlToAnalyze} for user with interests: ${userInterests.substring(0, 50)}...`);
+            await processUrl(urlToAnalyze, userInterests, userExclusions);
             console.log(`[JOB SUCCESS] Finished: ${urlToAnalyze}`);
 
         } catch (err) {
             console.error('[WORKER LOOP ERROR]', err);
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // V případě chyby parsování (starý formát) zkusíme zpracovat jako string
+            if (err instanceof SyntaxError && response && response.element) {
+                 try {
+                    console.log(`[FALLBACK] Retrying job with raw element: ${response.element}`);
+                    await processUrl(response.element, '', '');
+                    console.log(`[JOB SUCCESS VIA FALLBACK] Finished: ${response.element}`);
+                } catch (fallbackErr) {
+                    console.error('[FALLBACK PROCESSING FAILED]', fallbackErr);
+                }
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
         }
     }
 }
 
 // --- Logika zpracování jedné URL ---
-async function processUrl(url) {
+async function processUrl(url, interests, exclusions) {
     const client = await pool.connect();
     try {
         // Získání HTML
@@ -45,9 +61,9 @@ async function processUrl(url) {
         const contentMap = extractContentMap($);
 
         // --- Analýza Aury Stránky ---
-        const pageAura = generatePageAura(contentMap);
+        const pageAura = generatePageAura(contentMap, interests, exclusions);
         
-        // Nově: Generování slovního vysvětlení
+        // Nově: Generování slovního vysvětlení s ohledem na relevanci
         const explanationText = generateExplanation(pageAura, contentMap);
         pageAura.circle.intent = explanationText; // Uložíme vysvětlení do pole 'intent'
 
@@ -193,7 +209,15 @@ function extractLinks($, pageUrl) {
 
 function generateExplanation(pageAura, contentMap) {
     const reasons = [];
-    const { stability, relation: trust, meaning } = pageAura.star;
+    const { star, relevance } = pageAura;
+    const { stability, relation: trust, meaning } = star;
+
+    // --- Personalizace ---
+    if (relevance === 1) {
+        reasons.push('Stránka se dobře shoduje s vašimi zájmy.');
+    } else if (relevance === -1) {
+        reasons.push('Upozornění: Obsah se může shodovat s tématy, která jste vyloučili.');
+    }
 
     // Hodnocení Stability
     if (stability.value > 90) {
@@ -231,7 +255,12 @@ function generateExplanation(pageAura, contentMap) {
     return reasons.join(' ');
 }
 
-function generatePageAura(contentMap) {
+function generatePageAura(contentMap, interests, exclusions) {
+    // Příprava uživatelských preferencí
+    const interestKeywords = interests.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
+    const exclusionKeywords = exclusions.toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
+    const pageTopics = contentMap.key_topics;
+
     // Vylepšená, ale stále jednoduchá, rule-based analýza
     let stability = 100;
     if (contentMap.headings.filter(h => h.level === 'h1').length > 1) stability -= 20; // Penalizace za více H1
@@ -239,13 +268,28 @@ function generatePageAura(contentMap) {
     if (!contentMap.meta_description) stability -= 10;
 
     let trust = 50;
-    if (contentMap.key_topics.includes('kontakt') || contentMap.key_topics.includes('contact')) trust += 20;
-    if (contentMap.key_topics.includes('privacy') || contentMap.key_topics.includes('soukromí')) trust += 20;
+    if (pageTopics.includes('kontakt') || pageTopics.includes('contact')) trust += 20;
+    if (pageTopics.includes('privacy') || pageTopics.includes('soukromí')) trust += 20;
     
-    let meaning = 20 + (contentMap.key_topics.length * 10);
-    meaning = Math.min(meaning, 100);
+    let meaning = 20 + (pageTopics.length * 10);
 
-    const circleColor = stability > 70 && trust > 60 ? 'green' : (stability < 50 ? 'red' : 'yellow');
+    // --- Personalizace na základě zájmů ---
+    let relevanceScore = 0;
+    if (interestKeywords.some(keyword => pageTopics.includes(keyword))) {
+        trust += 15;
+        meaning += 20;
+        relevanceScore = 1; // Pozitivní relevance
+    }
+    if (exclusionKeywords.some(keyword => pageTopics.includes(keyword))) {
+        trust -= 30;
+        meaning -= 20;
+        relevanceScore = -1; // Negativní relevance
+    }
+    // Omezení hodnot na 0-100
+    trust = Math.max(0, Math.min(trust, 100));
+    meaning = Math.max(0, Math.min(meaning, 100));
+
+    const circleColor = relevanceScore === -1 ? 'purple' : (stability > 70 && trust > 60 ? 'green' : (stability < 50 ? 'red' : 'yellow'));
 
     return {
         star: { 
@@ -254,7 +298,8 @@ function generatePageAura(contentMap) {
             meaning: { value: meaning, saturation: 80 }  // Smysl/Kontext
             // ... ostatní cípy mohou být defaultně 50
         },
-        circle: { color: circleColor, intent: 'Vypočteno workerem' }
+        circle: { color: circleColor, intent: 'Vypočteno workerem' },
+        relevance: relevanceScore // Přidáme skóre relevance pro vysvětlení
     };
 }
 

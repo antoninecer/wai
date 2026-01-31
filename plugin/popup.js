@@ -207,8 +207,16 @@ async function fetchAndDisplayAnalysis(url, userId) {
     try {
         const response = await fetch('https://api.wai.ventureout.cz/analyze', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url, userId }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Přidáme zájmy a exkluze do těla požadavku
+            body: JSON.stringify({ 
+                url, 
+                userId,
+                interests: window.settings.interests,
+                exclusions: window.settings.exclusions
+            }),
         });
 
         if (!response.ok) {
