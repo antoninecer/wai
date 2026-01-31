@@ -387,7 +387,26 @@ function renderAnalysis(data) {
     }
 }
 
-    // Přepsaná logovací funkce, která respektuje nastavení
+    async function getUserId() {
+    try {
+        const data = await chrome.storage.sync.get('userId');
+        if (data.userId) {
+            log(`Retrieved existing userId: ${data.userId}`);
+            return data.userId;
+        } else {
+            const newUserId = `wai-user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            await chrome.storage.sync.set({ userId: newUserId });
+            log(`Generated and stored new userId: ${newUserId}`);
+            return newUserId;
+        }
+    } catch (error) {
+        log('Error getting or setting userId in chrome.storage.sync.', error);
+        // Fallback to a temporary ID if storage fails
+        return `wai-user-temporary-${Date.now()}`;
+    }
+}
+
+// Přepsaná logovací funkce, která respektuje nastavení
 function log(message, data = null) {
     if (!settings.debugLog) return;
     rawLog(message, data);
