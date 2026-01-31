@@ -68,13 +68,20 @@ app.post('/analyze', async (req, res) => {
             );
 
             if (page) {
+                // "Samoopravný" mechanismus: Pokud jsou data evidentně stará, vrátíme je, ale na pozadí spustíme re-analýzu
+                if (page.page_aura_circle && page.page_aura_circle.intent === 'Vypočteno workerem') {
+                    console.log(`[DATA STALE] Stale 'intent' found for ${url}. Returning data and queueing re-analysis.`);
+                    // Na pozadí pošleme požadavek na re-analýzu
+                    queueAnalysis({ ...req.body, force_recrawl: true }); 
+                }
+
                 // Máme čerstvá data, vrátíme je
                  return res.json({
                     status: 'completed',
                     domainAura: domain.overall_aura_circle,
                     pageAura: {
                         star: page.page_aura_star,
-                        circle: page.page_aura_circle, // Toto je správný objekt s intentem
+                        circle: page.page_aura_circle,
                         content_map: page.content_map,
                         links: page.links || []
                     }
