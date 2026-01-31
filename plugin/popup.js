@@ -71,15 +71,32 @@ async function initializeApp() {
 // =================================================================================
 
 function setupUIListeners() {
-    // ... (zůstává stejné)
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+
+            // Deactivate all tabs
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+
+            // Activate the clicked tab
+            button.classList.add('active');
+            document.getElementById(targetTab).classList.add('active');
+        });
+    });
 }
 
 async function loadSettings() {
-    // ... (zůstává stejné)
+    // Placeholder: In a real scenario, this would load from chrome.storage
+    console.log('loadSettings called');
+    window.settings = {
+        debugLog: true // Default to true to keep the debug tab visible
+    };
 }
 
 async function saveSettings() {
-    // ... (zůstává stejné)
+    // Placeholder: In a real scenario, this would save to chrome.storage
+    console.log('saveSettings called');
 }
 
 
@@ -88,19 +105,24 @@ async function saveSettings() {
 // =================================================================================
 
 async function runAnalysis() {
-    // ... (zůstává stejné)
+    console.log('runAnalysis called');
+    analysisContent.innerHTML = '<p>Analýza je dočasně nedostupná.</p>';
 }
 
 async function fetchAndDisplayAnalysis(url) {
-    // ... (zůstává stejné)
+    // Placeholder
+    console.log('fetchAndDisplayAnalysis called with url:', url);
 }
 
 function renderAnalysis(data) {
-    // ... (zůstává stejné)
+    // Placeholder
+    console.log('renderAnalysis called with data:', data);
 }
 
 async function getUserId() {
-    // ... (zůstává stejné)
+    // Placeholder
+    console.log('getUserId called');
+    return 'test-user';
 }
 
 // Přepsaná logovací funkce, která respektuje nastavení
