@@ -71,15 +71,18 @@ app.post('/analyze', async (req, res) => {
                 // Máme čerstvá data, vrátíme je
                  return res.json({
                     status: 'completed',
-                    domainAura: domain.overall_aura_circle, // Pro badge ikony
+                    domainAura: domain.overall_aura_circle,
                     pageAura: {
                         star: page.page_aura_star,
-                        circle: page.page_aura_circle, // Použijeme detailní data z page
+                        circle: page.page_aura_circle, // Toto je správný objekt s intentem
                         content_map: page.content_map,
                         links: page.links || []
                     }
                 });
             } else {
+                await queueAnalysis(req.body);
+                return res.json({ status: 'analyzing_page', domainAura: domain.overall_aura_circle });
+            }
                 await queueAnalysis(req.body);
                 return res.json({ status: 'analyzing_page', domainAura: domain.overall_aura_circle });
             }
