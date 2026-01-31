@@ -31,10 +31,6 @@ window.addEventListener("click", () => {
     }
 });
 
-// --- Globální proměnné a konstanty ---
-const API_ENDPOINT = 'https://api.wai.ventureout.cz/analyze';
-let analysisInterval = null;
-
 // =================================================================================
 // Inicializace
 // =================================================================================
