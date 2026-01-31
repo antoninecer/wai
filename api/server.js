@@ -71,10 +71,10 @@ app.post('/analyze', async (req, res) => {
                 // Máme čerstvá data, vrátíme je
                  return res.json({
                     status: 'completed',
-                    domainAura: domain.overall_aura_circle,
+                    domainAura: domain.overall_aura_circle, // Pro badge ikony
                     pageAura: {
                         star: page.page_aura_star,
-                        circle: page.page_aura_circle,
+                        circle: page.page_aura_circle, // Použijeme detailní data z page
                         content_map: page.content_map,
                         links: page.links || []
                     }
