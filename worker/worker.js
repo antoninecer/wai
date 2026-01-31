@@ -63,9 +63,11 @@ async function processUrl(url, interests, exclusions) {
         // --- Analýza Aury Stránky ---
         const pageAura = generatePageAura(contentMap, interests, exclusions);
         
-        // Nově: Generování slovního vysvětlení s ohledem na relevanci
+        // Generování slovního vysvětlení
         const explanationText = generateExplanation(pageAura, contentMap);
-        pageAura.circle.intent = explanationText; // Uložíme vysvětlení do pole 'intent'
+        
+        // Přiřazení finálního vysvětlení k objektu kruhu
+        pageAura.circle.intent = explanationText;
 
         // --- Zahájení databázové transakce ---
         await client.query('BEGIN');
@@ -298,7 +300,7 @@ function generatePageAura(contentMap, interests, exclusions) {
             meaning: { value: meaning, saturation: 80 }  // Smysl/Kontext
             // ... ostatní cípy mohou být defaultně 50
         },
-        circle: { color: circleColor, intent: 'Vypočteno workerem' },
+        circle: { color: circleColor },
         relevance: relevanceScore // Přidáme skóre relevance pro vysvětlení
     };
 }
