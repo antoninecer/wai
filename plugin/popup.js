@@ -330,76 +330,46 @@ function renderAnalysis(data) {
         // ... (zbytek HTML zůstává stejný) ...
     `;
 
-    // Přidání interaktivity pro zobrazení detailů hvězdy
-    document.getElementById('toggle-star-details').addEventListener('click', (e) => {
-        e.preventDefault();
-        const detailsContainer = document.getElementById('star-details-container');
-        if (detailsContainer.style.display === 'none') {
-            const aspectNames = ['Stabilita', 'Tok', 'Vůle', 'Vztah', 'Hlas', 'Smysl', 'Integrita'];
-            let detailsHtml = '<h4>Detailní rozpis aury:</h4>';
-            orderedRays.forEach((ray, i) => {
-                detailsHtml += `<p style="font-size: 12px; margin: 4px 0;"><strong>${aspectNames[i]}:</strong> ${ray.score}/100</p>`;
-            });
-            detailsContainer.innerHTML = detailsHtml;
-            detailsContainer.style.display = 'block';
-            e.target.textContent = '[Skrýt detaily]';
-        } else {
-            detailsContainer.style.display = 'none';
-            e.target.textContent = '[Zobrazit detaily hvězdy]';
-        }
-    });
+// ... (kód pro `innerHTML` zůstává stejný) ...
 
-    document.getElementById('toggle-structure').addEventListener('click', (e) => {
-        e.preventDefault();
-        const structureContainer = document.getElementById('structure-container');
-        if (structureContainer.style.display === 'none') {
-            let structureHtml = '<h4>Struktura nadpisů:</h4>';
-            content_map.headings.forEach(h => {
-                const padding = (parseInt(h.level.charAt(1)) - 1) * 10;
-                structureHtml += `<p style="font-size: 11px; margin: 2px 0; padding-left: ${padding}px;"><strong>${h.level.toUpperCase()}:</strong> ${h.text.substring(0, 50)}...</p>`;
-            });
-            structureContainer.innerHTML = structureHtml;
-            structureContainer.style.display = 'block';
-            e.target.textContent = 'Skrýt strukturu obsahu';
-        } else {
-            structureContainer.style.display = 'none';
-            e.target.textContent = 'Zobrazit strukturu obsahu';
+    // --- PŘIPOJENÍ EVENT LISTENERŮ POMOCÍ DELEGACE ---
+    analysisContent.addEventListener('click', (e) => {
+        // Delegace pro [Zobrazit detaily hvězdy]
+        if (e.target && e.target.id === 'toggle-star-details') {
+            e.preventDefault();
+            const detailsContainer = document.getElementById('star-details-container');
+            if (detailsContainer.style.display === 'none') {
+                const aspectNames = ['Stabilita', 'Tok', 'Vůle', 'Vztah', 'Hlas', 'Smysl', 'Integrita'];
+                let detailsHtml = '<h4>Detailní rozpis aury:</h4>';
+                orderedRays.forEach((ray, i) => {
+                    detailsHtml += `<p style="font-size: 12px; margin: 4px 0;"><strong>${aspectNames[i]}:</strong> ${ray.score}/100</p>`;
+                });
+                detailsContainer.innerHTML = detailsHtml;
+                detailsContainer.style.display = 'block';
+                e.target.textContent = '[Skrýt detaily]';
+            } else {
+                detailsContainer.style.display = 'none';
+                e.target.textContent = '[Zobrazit detaily hvězdy]';
+            }
         }
-    });
 
-    document.getElementById('toggle-structure').addEventListener('click', (e) => {
-        e.preventDefault();
-        const structureContainer = document.getElementById('structure-container');
-        if (structureContainer.style.display === 'none') {
-            let structureHtml = '<h4>Struktura nadpisů:</h4>';
-            content_map.headings.forEach(h => {
-                const padding = (parseInt(h.level.charAt(1)) - 1) * 10;
-                structureHtml += `<p style="font-size: 11px; margin: 2px 0; padding-left: ${padding}px;"><strong>${h.level.toUpperCase()}:</strong> ${h.text.substring(0, 50)}...</p>`;
-            });
-            structureContainer.innerHTML = structureHtml;
-            structureContainer.style.display = 'block';
-            e.target.textContent = 'Skrýt strukturu obsahu';
-        } else {
-            structureContainer.style.display = 'none';
-            e.target.textContent = 'Zobrazit strukturu obsahu';
-        }
-    });
-
-    document.getElementById('toggle-structure').addEventListener('click', (e) => {
-        e.preventDefault();
-        const structureContainer = document.getElementById('structure-container');
-        if (structureContainer.style.display === 'none') {
-            let structureHtml = '<h4>Struktura nadpisů:</h4>';
-            content_map.headings.forEach(h => {
-                const padding = (parseInt(h.level.charAt(1)) - 1) * 10;
-                structureHtml += `<p style="font-size: 11px; margin: 2px 0; padding-left: ${padding}px;"><strong>${h.level.toUpperCase()}:</strong> ${h.text.substring(0, 50)}...</p>`;
-            });
-            structureContainer.innerHTML = structureHtml;
-            structureContainer.style.display = 'block';
-            e.target.textContent = 'Skrýt strukturu obsahu';
-        } else {
-            structureContainer.style.display = 'none';
-            e.target.textContent = 'Zobrazit strukturu obsahu';
+        // Delegace pro [Zobrazit strukturu obsahu]
+        if (e.target && e.target.id === 'toggle-structure') {
+            e.preventDefault();
+            const structureContainer = document.getElementById('structure-container');
+            if (structureContainer.style.display === 'none') {
+                let structureHtml = '<h4>Struktura nadpisů:</h4>';
+                content_map.headings.forEach(h => {
+                    const padding = (parseInt(h.level.charAt(1)) - 1) * 10;
+                    structureHtml += `<p style="font-size: 11px; margin: 2px 0; padding-left: ${padding}px;"><strong>${h.level.toUpperCase()}:</strong> ${h.text.substring(0, 50)}...</p>`;
+                });
+                structureContainer.innerHTML = structureHtml;
+                structureContainer.style.display = 'block';
+                e.target.textContent = 'Skrýt strukturu obsahu';
+            } else {
+                structureContainer.style.display = 'none';
+                e.target.textContent = 'Zobrazit strukturu obsahu';
+            }
         }
     });
 
@@ -415,6 +385,7 @@ function renderAnalysis(data) {
             runAnalysis(true); 
         };
     }
+}
 
     // ... (zbytek kódu pro strukturu obsahu a re-analýzu zůstává stejný) ...
 }async function getUserId() {
