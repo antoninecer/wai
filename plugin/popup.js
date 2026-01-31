@@ -292,7 +292,30 @@ function renderAnalysis(data) {
     // Nyní by měl být v pageCircle.intent správný text
     const explanationText = pageCircle.intent || chrome.i18n.getMessage("analysisGenericDesc");
 
-    // ... (kód pro vykreslení hvězdy - createStarPath, starRays - zůstává stejný) ...
+    // --- Vykreslení hvězdy ---
+    const createStarPath = (rays) => {
+        const points = [];
+        const centerX = 50, centerY = 50, numPoints = 7;
+        for (let i = 0; i < numPoints; i++) {
+            const score = rays[i].score / 100;
+            const angle = (i * 2 * Math.PI / numPoints) - (Math.PI / 2); 
+            const length = 5 + (score * 40); 
+            const x = centerX + length * Math.cos(angle);
+            const y = centerY + length * Math.sin(angle);
+            points.push(`${x},${y}`);
+        }
+        return points.join(' ');
+    };
+
+    const rayColors = ["#FF4136", "#FF851B", "#FFDC00", "#2ECC40", "#0074D9", "#B10DC9", "#FFFFFF"];
+    const starRays = orderedRays.map((ray, i) => {
+        const angle = (i * 2 * Math.PI / 7) - (Math.PI / 2);
+        const L = 5 + ((ray.score / 100) * 40);
+        const x2 = 50 + L * Math.cos(angle);
+        const y2 = 50 + L * Math.sin(angle);
+        return `<line x1="50" y1="50" x2="${x2}" y2="${y2}" stroke="${rayColors[i]}" stroke-width="2" opacity="${ray.confidence}" />`;
+    }).join('');
+    // --- Konec vykreslení hvězdy ---
 
     analysisContent.innerHTML = `
         <div style="display: flex; align-items: center; gap: 20px;">
