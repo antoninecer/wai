@@ -46,6 +46,10 @@ async function processUrl(url) {
 
         // --- Analýza Aury Stránky ---
         const pageAura = generatePageAura(contentMap);
+        
+        // Nově: Generování slovního vysvětlení
+        const explanationText = generateExplanation(pageAura, contentMap);
+        pageAura.circle.intent = explanationText; // Uložíme vysvětlení do pole 'intent'
 
         // --- Zahájení databázové transakce ---
         await client.query('BEGIN');
@@ -185,6 +189,46 @@ function extractLinks($, pageUrl) {
         }
     });
     return links;
+}
+
+function generateExplanation(pageAura, contentMap) {
+    const reasons = [];
+    const { stability, relation: trust, meaning } = pageAura.star;
+
+    // Hodnocení Stability
+    if (stability.value > 90) {
+        reasons.push('Stránka je technicky a strukturálně velmi dobře postavena.');
+    } else if (stability.value < 60) {
+        reasons.push('Technická stabilita má rezervy, což může ovlivnit zážitek.');
+    }
+
+    // Hodnocení Důvěry (Vztahu)
+    if (trust.value > 70) {
+        reasons.push('Vysoká míra důvěryhodnosti díky přítomnosti klíčových signálů.');
+    } else if (trust.value < 40) {
+        reasons.push('Důvěryhodnost je nižší, mohou chybět transparentní informace.');
+    }
+
+    // Hodnocení Smyslu
+    if (meaning.value > 80) {
+        reasons.push('Obsah je tematicky silně zaměřený a jasný.');
+    } else if (meaning.value < 40) {
+        reasons.push('Tematické zaměření stránky není zcela zřejmé.');
+    }
+    
+    // Doplňující postřehy z obsahu
+    if (contentMap.headings.filter(h => h.level === 'h1').length > 1) {
+        reasons.push('Struktura obsahu by mohla být přehlednější (bylo nalezeno více hlavních nadpisů H1).');
+    }
+    if (!contentMap.title) {
+        reasons.push('Chybějící titulek stránky znesnadňuje orientaci.');
+    }
+
+    if (reasons.length === 0) {
+        return 'Stránka se jeví jako vyvážená bez výrazných pozitivních či negativních signálů.';
+    }
+
+    return reasons.join(' ');
 }
 
 function generatePageAura(contentMap) {
