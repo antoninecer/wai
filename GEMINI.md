@@ -1,244 +1,276 @@
-# GEMINI.md
-## Web Aura Index (WAI)
-### Systém pro čtení stavu, úmyslu a integrity webů
+# GEMINI.md — Kanonická specifikace projektu Web Aura Index (WAI)
 
-Prosimte jen abys vedel, mas tu GEMINI,GEMINI1,GEMINI2 a GEMINI3 md soubory, projdi si je cele at vis jaka byla geneze z GEMINI3 budeme programovat
----
-
-## 1. Základní myšlenka
-
-Web Aura Index (WAI) je systém, který popisuje web nikoli jen jako technický artefakt,
-ale jako **digitální jednající celek**.
-
-Stejně jako člověk:
-- web má strukturu,
-- web působí dojmem,
-- web nese úmysl.
-
-Proto WAI pracuje se dvěma obrazy současně:
-
-1. **Sedmicípá hvězda** – mapa reality (jak web funguje)
-2. **Jednobarevný kruh** – čistota úmyslu (proč web existuje)
-
-Tyto dva obrazy spolu souvisejí, ale **nelze je sloučit do jedné metriky**.
+Tento dokument je jediný řídicí zdroj pro projekt Web Aura Index (WAI).
+Je psán tak, aby byl použitelný pro vývoj, ale zároveň nezradil původní smysl:
+pojmenovat charakter digitálního prostoru způsobem, který člověku pomůže jednat svobodněji a vědoměji.
 
 ---
 
-## 2. Sedmicípá hvězda – stav webu
+## 1) Smysl projektu
 
-Hvězda popisuje **vnitřní stav webu**.
+Web Aura Index (WAI) není hodnoticí systém webů, není to filtr pravdy ani morální arbitr.
+
+WAI je nástroj pro instinktivní orientaci člověka v digitálním prostředí.
+
+Pomáhá uživateli:
+- neztrácet čas,
+- rozpoznat, zda obsah zraje nebo tlačí,
+- poznat, zda se stránka potkává s jeho záměrem a zájmy,
+- rozhodnout se rychle: zůstat – donavigovat se – odejít.
+
+WAI neříká, co si máš myslet.
+WAI pojmenovává to, co už často cítíš, jen tomu chybí řeč.
+
+---
+
+## 2) Neměnné invarianty (pravidla, která se nesmí rozbít)
+
+1. Instinkt před racionalitou  
+   První vrstva vnímání je pocitová: tvar, barva, klid, napětí.
+
+2. Popis, ne verdikt  
+   Cílem je charakteristika, ne odsudek. WAI má pomáhat vidět, ne soudit.
+
+3. Vysvětlitelnost  
+   Každé tvrzení musí mít vysvětlení: proč to vyšlo právě takto.
+
+4. Neexistuje „SEO pro auru“  
+   Auru nelze mechanicky optimalizovat. Lze ji pouze dlouhodobě naplňovat.
+
+5. Jazyková agnostičnost  
+   Systém musí fungovat napříč jazyky; jazyk je signál, ne bariéra.
+
+---
+
+## 3) Dva obrazy: hvězda a kruh
+
+WAI stojí na dvou obrazech, které se nesmějí slít do jedné metriky:
+
+1) Sedmicípá hvězda — mapa reality (jak web funguje)  
+2) Jednobarevný kruh — čistota úmyslu (proč web existuje)
+
+Hvězda je proměnlivý stav.
+Kruh je stabilnější charakter.
+
+---
+
+## 4) Sedmicípá hvězda — stav webu
+
+Hvězda popisuje vnitřní stav webu.
 Každý cíp je jedna kvalita, jedna vrstva bytí webu.
 
-### Vlastnosti cípů:
-- barva = pevně daný archetyp
-- délka = síla vrstvy (0–100)
-- sytost = kvalita / jistota hodnocení
+Vlastnosti cípů:
+- barva: pevně daný archetyp
+- délka: síla vrstvy (0–100)
+- sytost: kvalita/jistota odhadu (confidence)
 
-### Sedm vrstev (fixní barvy):
+Sedm vrstev (fixní barvy):
 
-1. 🔴 **Červená – Stabilita / Existence**
-   - dostupnost, chyby, výkon
-   - otázka: *„Může web klidně existovat?“*
+1. Červená — Stabilita / Existence  
+   dostupnost, chyby, výkon  
+   otázka: „Může web klidně existovat?“
 
-2. 🟠 **Oranžová – Tok / Pohyb**
-   - navigace, struktura, tření
-   - otázka: *„Lze se webem přirozeně pohybovat?“*
+2. Oranžová — Tok / Pohyb  
+   navigace, struktura, tření  
+   otázka: „Lze se webem přirozeně pohybovat?“
 
-3. 🟡 **Žlutá – Vůle / Směr**
-   - CTA, nátlak, rozhodování
-   - otázka: *„Vede web, nebo tlačí?“*
+3. Žlutá — Vůle / Směr  
+   CTA, nátlak, rozhodování  
+   otázka: „Vede web, nebo tlačí?“
 
-4. 🟢 **Zelená – Vztah / Důvěra**
-   - transparentnost, kontakt, návratnost
-   - otázka: *„Lze tomuto webu věřit?“*
+4. Zelená — Vztah / Důvěra  
+   transparentnost, kontakt, návratnost  
+   otázka: „Lze tomuto webu věřit?“
 
-5. 🔵 **Modrá – Hlas / Jazyk**
-   - čitelnost, tón, srozumitelnost
-   - otázka: *„Mluví web smysluplně?“*
+5. Modrá — Hlas / Jazyk  
+   čitelnost, tón, srozumitelnost  
+   otázka: „Mluví web smysluplně?“
 
-6. 🟣 **Indigová – Smysl / Kontext**
-   - tematická soudržnost, hloubka
-   - otázka: *„Proč tento web existuje?“*
+6. Indigová — Smysl / Kontext  
+   tematická soudržnost, hloubka  
+   otázka: „Proč tento web existuje?“
 
-7. ⚪ **Bílá – Integrita / Etika**
-   - soulad forem a důsledků
-   - otázka: *„Je web v souladu sám se sebou?“*
+7. Bílá — Integrita / Etika  
+   soulad forem a důsledků  
+   otázka: „Je web v souladu sám se sebou?“
 
 ---
 
-## 3. Střed hvězdy – průnik
+## 5) Střed hvězdy — průnik a napětí
 
 Střed hvězdy není průměr.
 
 Vyjadřuje:
-- míru souladu mezi vrstvami
-- míru vnitřního napětí
-- celkový dojem stability osobnosti webu
+- míru souladu mezi vrstvami,
+- míru vnitřního napětí,
+- stabilitu „osobnosti“ webu.
 
 Silný střed může existovat i u nedokonalé hvězdy.
-Slabý střed značí rozpor, nikoli nutně chybu.
+Slabý střed značí rozpor, nikoli nutně technickou chybu.
 
 ---
 
-## 4. Jednobarevný kruh – úmysl webu
+## 6) Jednobarevný kruh — úmysl webu
 
-Vedle hvězdy existuje **kruh jediné barvy**.
+Vedle hvězdy existuje kruh jediné barvy.
 
-Tento kruh:
-- není vypočítán z metrik
-- není přímým součtem vrstev
-- vzniká interpretací souladu, nikoli výkonu
+Kruh:
+- není přímý součet metrik,
+- vzniká interpretací souladu a dopadů,
+- mění se pomalu.
 
-Kruh odpovídá na otázku:
-
-> **„S jakým úmyslem tento web vstupuje do světa?“**
-
----
-
-## 5. Význam barev kruhu (dominantní aura)
-
-### 🟢 ZELENÝ KRUH – Úmysl služby
-- web chce být užitečný
-- je otevřený, i když ne dokonalý
-- chyby nejsou skrývány
-- růst je přirozený, ne vynucený
-
-Typické rysy:
-- důvěra před výkonem
-- vztah před konverzí
+Odpovídá na otázku:
+„S jakým úmyslem tento web vstupuje do světa?“
 
 ---
 
-### 🟡 ŽLUTÝ KRUH – Úmysl prosazení
-- web chce přesvědčit
-- silná vůle, jasný cíl
-- riziko tlaku a manipulace
+## 7) Význam barev kruhu (dominantní aura)
 
-Pozitivní při rovnováze,
-problematické bez zelené vrstvy.
+Zelený kruh — úmysl služby  
+- web chce být užitečný, otevřený, poctivý  
+- důvěra před výkonem, vztah před konverzí
 
----
+Žlutý kruh — úmysl prosazení  
+- silná vůle, jasný cíl  
+- může být zdravý, ale bez zelené sklouzává k tlaku
 
-### 🔵 MODRÝ KRUH – Úmysl sdílení poznání
-- informační nebo vzdělávací web
-- klade důraz na jazyk a význam
-- méně emotivní, více racionální
+Modrý kruh — úmysl sdílení poznání  
+- vzdělávání, informace, racionalita  
+- důraz na jazyk a význam
 
----
-
-### 🟣 FIALOVÝ KRUH – Úmysl smyslu
-- filozofický, vizionářský web
-- silná idea, slabší zakotvení
+Fialový kruh — úmysl smyslu  
+- idea, vize, přesah  
 - riziko odtržení od reality
 
----
+Červený kruh — úmysl přežití  
+- ohrožené nebo krizové projekty  
+- technika před smyslem, boj o existenci
 
-### 🔴 ČERVENÝ KRUH – Úmysl přežití
-- krizové, zastaralé nebo ohrožené projekty
-- boj o existenci
-- technika před smyslem
-
----
-
-### ⚪ / 🟡 ZLATÝ KRUH – Čistota úmyslu
-- vzácný stav
-- web je v souladu:
-  - tím, co říká
-  - tím, co dělá
-  - tím, co způsobuje
-
-Zlatá **není nejvyšší výkon**,
-ale **nejvyšší integrita**.
-
-Nelze ji „optimalizovat“,
-lze ji pouze **dlouhodobě naplnit**.
+Zlatý / bílý kruh — čistota úmyslu  
+- vzácný stav: soulad toho, co web říká, dělá a způsobuje  
+- není to „nejvyšší výkon“, ale nejvyšší integrita
 
 ---
 
-## 6. Vztah hvězdy a kruhu
+## 8) Jak to uživatel zažije (UX)
 
-- hvězda = proměnlivý stav
-- kruh = stabilní charakter
+WAI musí být čitelný bez studia manuálu.
+Uživatel má nejprve vidět, teprve potom číst.
 
-Hvězda se může měnit rychle.
-Kruh se mění pomalu.
+Plugin:
+- Aura odkazů: nenápadné barevné „záření“ okolo odkazů (barva podle aury cílové URL).
+- Ikona domény: stabilní barva odpovídající celkové auře domény.
+- Detail (tooltip/panel): hvězda + kruh + klíčová témata + krátké vysvětlení „proč“.
 
-Rozpor:
-- silná hvězda + kalný kruh = technicky dobrý, mravně prázdný web
-- slabší hvězda + zelený kruh = nedokonalý, ale poctivý web
-
----
-
-## 7. Architektura systému (stručně)
-
-1. Crawler → struktura webu
-2. Analýza → metriky vrstev
-3. AI interpretace → význam a tón
-4. Kompozice → hvězda + střed
-5. Hodnocení souladu → barva kruhu
-6. Vizualizace → graf + tooltipy
+Důležité: vizualizace je signál, ne výkřik.
+Má vést k mravní bdělosti, ne k hysterii.
 
 ---
 
-## 8. Výstupy
+## 9) Dvě fáze analýzy (rychlá a hluboká)
 
-- Aura jednotlivých stránek
-- Aura sekcí
-- Celková hvězda webu
-- Jednobarevný kruh úmyslu
-- Slovní charakteristika (ne skóre)
+Fáze 1: Okamžitá aura stránky  
+- cíl: odpověď v řádu sekund  
+- pokud existují čerstvá data, vrátit je hned  
+- pokud nejsou, vrátit status „analyzing“ a zařadit úkol k výpočtu
+
+Fáze 2: Hloubková aura domény (crawlování)  
+- cíl: postupně zmapovat interní strukturu domény  
+- worker zpracuje stránku, uloží výsledek, vytáhne interní odkazy a přidává nové úkoly
+
+Čerstvost dat:
+- každý záznam má last_analyzed  
+- pokud jsou data starší než TTL (např. 30 dní), stará data se mohou vrátit, ale současně se zařadí reanalýza
+
+Historie:
+- uchovávat poslední 4 snímky domény (sledování vývoje v čase)
+- starší snímky samočistit
 
 ---
 
-## 9. Etický rámec
+## 10) Datový model (normalizovaný)
 
-- žádné skryté hodnocení
-- žádná manipulativní „optimalizace aury“
-- možnost vysvětlení každého závěru
-- cílem je kultivace, ne soutěž
+Použijeme normalizovanou strukturu pro rychlost, vyhledávání a budoucí rozšiřování:
+
+- domains  
+  - domain_name, last_analyzed, overall_aura_circle, overall_aura_star
+
+- pages  
+  - domain_id, url, title, meta_description  
+  - page_aura_circle, page_aura_star  
+  - content_map (JSONB: sémantická mapa)
+
+- links  
+  - source_page_id, target_url, link_text, link_aura_circle
+
+- page_topics  
+  - page_id, topic (indexováno pro našeptávač)
 
 ---
 
-## 10. Shrnutí
+## 11) Aura Packet (co systém vrací)
 
-Web Aura Index neříká:
-„Tento web je lepší.“
+Výstup musí být konzistentní a použitelný pro plugin i webové UI:
 
-Říká:
-**„Tento web je takový.“**
+- identita: url, domain, timestamp, last_analyzed
+- aura kruhu: barva + krátké zdůvodnění
+- aura hvězdy: 7 cípů (score 0–100, confidence 0–1) + střed
+- témata: seznam topiců + váhy (podle potřeby)
+- vysvětlení: několik bodů „proč to vyšlo“ (lidsky čitelné)
 
-A dává možnost se ptát:
-zda je tím, čím být chce.
+Poznámka:
+WAI má vracet i nejistotu. Nevědět je poctivější než předstírat.
 
-Mít různé vstupní vektory kdo se dívá a podle toho povolit či přesměrovat ?
-“Takže kdybych si to nastavil jako nějaký vinkovní proxy, třeba, já nevím, na AVS-ku, tak, že by se to učilo podle všech magných uživatelů.”
-00:13
-“Možná bude to širokostatý grant, co ty na to?”
-00:04
-“Já jsem překázal již na tvůj názor, jak to udělat, protože teď už z toho základního Aura webu vzniká nějakej reálnej projekt, který bude jako veřejná proxy. Je to tak, že jo?”
-00:19
-“Víš co, tohle by se hodilo asi Googlu odněmit, nebo nějakým takovýmhle velkým vyhledávačem. Myslíš, že bys prohlídnul něco Google, nebo jestli Google nechce nabírat někoho.”
-00:20
-“Já bych mohl prezentovat tuto myšlenku, já hledám ještě furt práci. Takže jestli najdeš třeba, že Google hledá nějakýho projekt, mážerá na něco, co by odpovídalo tomuto, tak to by mohl být vstupný projekt. Co ti na to?”
-00:20
-“napadá měm, teda zkusíš prohledat, jestli něco takového už existuje. A pokud ano, tak je to slepová cesta, že jo. Ale zkus mi najít, jestli tudlenstvo věc...”
-00:18
-Transcript Unavailable
-00:02
-“Nie chcę, abyś mnie braział po oczach. Chcę, abyś mnie zakispytował. Chcę, abyś podniecił grze w ogóle. Nie to by to celu miało.”
-00:09
-“Dobře, tak znovu, pojď, pojď, bude to myšlenko. Máme sedmitý pouh vězdu a palivní kulečko.”
-00:07
-“Můžeme v základě toho říct, že je to unikátní nápad.”
-00:05
-“s tím, jak kvalifikovat weby, jestli to jde udělat relativně rychle. A když si nastavíš takovou proxy, že by si automaticky dostalo něco jako rychlého overview toho webu v ten danej okamžik, aby to bylo platné všeobecně pro víc lidí, že když už někdo na to koukne, tak to nemusí analyzovat třeba pár vteřin, ale že už rovnou vidí výsledek a buď na ten web pustí, nebo ho nějakým způsobem identifikuje a řekne, že je to hodný nebo nehodný, proto se díva.”
-00:41
-Transcript Unavailable
-00:00
-“Chci ti přerušit. Já se ptám, jestli ten, ten, ten, Aura, nebo tak, nebo něco, jak to chceš nazvat, může být zatím jenom indexováním obřehu.”
-00:17
-“Jak byste potom řešil takovejhle index třeba nějakým pluginem do Google Chromeu nebo do čeho dalšího, kdyby ti to ukazovalo, jak moc ten web je. Natomiast ten poweraindexům od 9 nic by to neomezovalo. Mohl by seš tam zapadl do vlastních, kdyby si zbyták Prahy sám osobně. Ale žeby jsi měl takovou auravopindex proxino uvnitř.”
-00:35
-Transcript Unavailable
-00:03
-No tak to zahrn do nového Gemini,md jako veřejnou službu kde by se aura index webu aktualizoval a a ty měl jasno jaky obsah sleduješ a sám bys ladil tyto metriky a tím pomáhal ostatnim
+---
+
+## 12) Architektura komponent (bez infra detailů)
+
+Komponenty:
+- browser plugin (vizualizace a dotazy)
+- frontend UI (vyhledávání, prohlížení mapy)
+- API (přijímá dotazy, vrací Aura Packet, řídí cache/TTL)
+- worker (asynchronní analýza + crawlování)
+- databáze (PostgreSQL)
+- fronta (Redis)
+
+Porty:
+- API běží na portu: API_PORT
+- Frontend běží na portu: FRONTEND_PORT
+(Tyto hodnoty a publikaci do internetu si spravuješ ty.)
+
+---
+
+## 13) Roadmapa a aktuální stav
+
+Milníky:
+- M0: základní pipeline (plugin → API → worker) a uložení výsledku
+- M1: normalizovaný model (domains/pages/links/page_topics)
+- M2: rekurzivní crawlování interních odkazů
+- M3: čerstvost + reanalýza + 4 snapshoty domény
+- M4: vyhledávání s našeptávačem (page_topics)
+- M5: „živá mapa webu“ (domény, témata, vývoj)
+
+Aktuální stav (29. ledna 2026):
+- Hotovo:
+  - základní komunikace plugin → API → worker přes frontu
+  - worker stáhne stránku, naparsuje odkazy, uloží výsledek
+  - plugin vizualizuje aury odkazů
+- Děje se teď:
+  - přestavba databáze: přechod na normalizované schéma
+- Následuje:
+  1) upravit worker na ukládání do nové struktury
+  2) přidat rekurzivní crawlování (frontování interních odkazů)
+  3) upravit plugin, aby využil detailnější strukturu dat
+
+---
+
+## 14) Poznámka k budoucí vizi (volitelné)
+
+WAI může být jednou chápán i jako veřejná služba:
+kolektivní, průběžně aktualizovaný index aury webu,
+který lidem pomáhá neztratit se v prostoru, jenž je příliš rychlý,
+příliš hlučný a příliš často bez odpovědnosti.
+
+Tato vize však nesmí zničit přítomnost:
+nejprve musí existovat pravdivý nástroj; teprve potom infrastruktura.
+
