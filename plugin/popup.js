@@ -277,7 +277,16 @@ async function fetchAndDisplayAnalysis(url, userId, force = false) {
 }
 
 function renderAnalysis(data) {
-    // ... (kód pro status 'pending' zůstává stejný) ...
+    // Klíčová oprava: Zkontrolujeme, zda vůbec máme data pro stránku
+    if (!data.pageAura) {
+        analysisContent.innerHTML = `
+            <p>${chrome.i18n.getMessage("analysisInProgress")}</p>
+            <p><strong>${data.status || chrome.i18n.getMessage("statusWaiting")}</strong></p>
+            <p>${chrome.i18n.getMessage("tryAgainShort")}</p>
+        `;
+        log('Rendered pending status because pageAura is missing.');
+        return;
+    }
 
     // Destrukturace s přejmenováním, abychom se vyvarovali kolizí
     const { domainAura, pageAura } = data;
