@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "description": "__MSG_appDesc__",
     "default_locale": "en",
-    "permissions": ["activeTab", "scripting", "storage", "action", "contextMenus"],
+    "permissions": ["activeTab", "scripting", "storage", "contextMenus"],
     "host_permissions": ["*://api.wai.ventureout.cz/*"],
     "action": {
         "default_popup": "popup.html",
