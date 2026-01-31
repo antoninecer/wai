@@ -229,31 +229,57 @@ async function fetchAndDisplayAnalysis(url, userId) {
 
 function renderAnalysis(data) {
     // If analysis is still pending on the server
-    if (data.status === 'pending' || data.status === 'in_progress') {
+    if (data.status === 'pending' || data.status === 'in_progress' || !data.pageAura) {
         analysisContent.innerHTML = `
             <p>Analýza této stránky stále probíhá...</p>
-            <p>Stav: <strong>${data.status}</strong></p>
+            <p>Stav: <strong>${data.status || 'čeká se'}</strong></p>
             <p>Zkuste to prosím znovu za chvíli.</p>
         `;
         log('Rendered pending status.');
         return;
     }
 
-    // If analysis is complete
-    const { aura_circle, aura_star, explanation, topics } = data.auraPacket;
+    // If analysis is complete, destructure from the correct object: pageAura
+    const { star: starData, circle: aura_circle, content_map } = data.pageAura;
+
+    // --- Data Transformation ---
+    // The API returns star data as an object, but the rendering logic needs an array of rays in a specific order.
+    // Order from spec: 1.Stabilita, 2.Tok, 3.Vůle, 4.Vztah, 5.Hlas, 6.Smysl, 7.Integrita
+    const starApiMap = {
+        stability: starData.stability, // 1.
+        flow: starData.flow,           // 2.
+        will: starData.will,           // 3.
+        relation: starData.relation,   // 4.
+        voice: starData.voice,         // 5.
+        meaning: starData.meaning,     // 6.
+        integrity: starData.integrity  // 7.
+    };
+    
+    const orderedRays = ['stability', 'flow', 'will', 'relation', 'voice', 'meaning', 'integrity'];
+    const aura_star_rays = orderedRays.map(key => {
+        const rayData = starApiMap[key];
+        return {
+            score: rayData ? rayData.value : 0,
+            confidence: rayData ? rayData.saturation / 100 : 0.5 // Convert 0-100 scale to 0-1
+        };
+    });
+    // --- End Transformation ---
+
+    const topics = content_map.key_topics || [];
+    // API doesn't provide an explanation, so we'll use the circle's intent as a placeholder.
+    const explanation = { summary: aura_circle.intent || "Analýza dokončena." };
+
 
     // Helper function to create the SVG path for the star
-    const createStarPath = (starData) => {
+    const createStarPath = (rays) => {
         const points = [];
         const centerX = 50;
         const centerY = 50;
         const numPoints = 7;
 
         for (let i = 0; i < numPoints; i++) {
-            const score = starData[i].score / 100;
-            // Angle in radians. Offset by -PI/2 to start the first point at the top.
+            const score = rays[i].score / 100;
             const angle = (i * 2 * Math.PI / numPoints) - (Math.PI / 2); 
-            // Max length of a ray is 45 to fit inside the 100x100 box with some padding
             const length = 5 + (score * 40); 
             
             const x = centerX + length * Math.cos(angle);
@@ -263,13 +289,11 @@ function renderAnalysis(data) {
         return points.join(' ');
     };
     
-    const starPoints = createStarPath(aura_star.rays);
+    const starPoints = createStarPath(aura_star_rays);
     
-    // Define colors for each ray based on the spec
     const rayColors = ["#FF4136", "#FF851B", "#FFDC00", "#2ECC40", "#0074D9", "#B10DC9", "#FFFFFF"];
 
-    // Generate individual lines for each ray of the star
-    const starRays = aura_star.rays.map((ray, i) => {
+    const starRays = aura_star_rays.map((ray, i) => {
         const angle = (i * 2 * Math.PI / 7) - (Math.PI / 2);
         const L = 5 + ((ray.score / 100) * 40);
         const x2 = 50 + L * Math.cos(angle);
@@ -295,7 +319,7 @@ function renderAnalysis(data) {
                 </svg>
             </div>
             <div>
-                <h3 style="margin: 0 0 5px 0;">Aura: ${aura_circle.name}</h3>
+                <h3 style="margin: 0 0 5px 0;">Aura: ${aura_circle.intent || 'Neznámá'}</h3>
                 <p style="margin: 0; font-size: 13px;">${explanation.summary}</p>
             </div>
         </div>
