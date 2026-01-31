@@ -207,9 +207,7 @@ async function fetchAndDisplayAnalysis(url, userId) {
     try {
         const response = await fetch('https://api.wai.ventureout.cz/analyze', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url, userId }),
         });
 
@@ -219,10 +217,23 @@ async function fetchAndDisplayAnalysis(url, userId) {
 
         const data = await response.json();
         log('Analysis data received from API.', data);
+        
+        // 1. Render the popup visuals
         renderAnalysis(data);
 
+        // 2. Send data to content script to highlight links
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tabs[0] && tabs[0].id) {
+            chrome.tabs.sendMessage(tabs[0].id, { 
+                type: "AURA_DATA_UPDATE",
+                pageAura: data.pageAura,
+                domainAura: data.domainAura
+            });
+            log('Sent AURA_DATA_UPDATE to content script.');
+        }
+
     } catch (error) {
-        log('Error fetching analysis from API.', error);
+        log('Error fetching or processing analysis.', error);
         analysisContent.innerHTML = `<p>Analýza selhala. Server vrátil chybu.</p><pre style="font-size: 10px; color: red;">${error.message}</pre>`;
     }
 }
@@ -314,7 +325,7 @@ function renderAnalysis(data) {
                     opacity: 0.8;">
                 </div>
                 <svg viewBox="0 0 100 100" style="position: relative; z-index: 1;">
-                    <polygon points="${starPoints}" fill="rgba(255, 255, 255, 0.5)" />
+                    <polygon points="${starPoints}" fill="rgba(128, 128, 128, 0.5)" stroke="#FFFFFF" stroke-width="1" />
                     ${starRays}
                 </svg>
             </div>
