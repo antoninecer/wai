@@ -41,7 +41,6 @@ function parseJobElement(raw) {
 
 // --- Pomocné: fetch HTML s jedním slušným fallbackem (bez obcházení) ---
 async function fetchHtmlWithFallback(url) {
-    // 1) základní pokus – náš bot UA
     try {
         const res = await axios.get(url, {
             headers: {
@@ -54,14 +53,12 @@ async function fetchHtmlWithFallback(url) {
         });
         return res;
     } catch (err) {
-        // síťová chyba
         throw err;
     }
 }
 
 // --- Pomocné: vytvořit "blocked" placeholder aury (šedá) ---
 function makeBlockedAura(reason, httpStatus) {
-    // Nejde o soud, ale o hranici poznání.
     const intent = `Nelze předběžně prozkoumat (${httpStatus || 'N/A'}): ${reason}`;
     return {
         circle: { color: 'grey', intent },
@@ -92,12 +89,57 @@ function makeBlockedContentMap(url, httpStatus, reason) {
     };
 }
 
+// --- Pomocné: normalizace URL (odstranění hashe) ---
+function normalizeUrl(u) {
+    try {
+        return new URL(u).href.split('#')[0];
+    } catch (e) {
+        return String(u || '').split('#')[0];
+    }
+}
+
+// --- Pomocné: z absolutní URL udělej "pathKey" (pathname + search) stejně jako ukládáš do pages.url ---
+function toPathKey(absoluteUrl) {
+    const u = new URL(absoluteUrl);
+    return u.pathname + u.search;
+}
+
+// --- Pomocné: vytvoř "aura pro link" z již známé cílové stránky (z tabulky pages) ---
+function makeKnownTargetLinkAura(targetPageRow) {
+    const circle = targetPageRow.page_aura_circle || { color: 'grey', intent: 'Cíl nemá uloženou auru.' };
+    const star = targetPageRow.page_aura_star || {
+        stability: { value: 50, saturation: 25 },
+        flow: { value: 50, saturation: 25 },
+        will: { value: 50, saturation: 25 },
+        relation: { value: 50, saturation: 25 },
+        voice: { value: 50, saturation: 25 },
+        meaning: { value: 50, saturation: 25 },
+        integrity: { value: 50, saturation: 25 },
+    };
+
+    // Do link aury přibalíme i trochu kontextu pro tooltip (nevadí, je to jsonb)
+    const contentMap = targetPageRow.content_map || {};
+    const keyTopics = Array.isArray(contentMap.key_topics) ? contentMap.key_topics : [];
+
+    return {
+        circle: circle,
+        star: star,
+        target: {
+            title: targetPageRow.title || '',
+            url: targetPageRow.url || '',
+            key_topics: keyTopics.slice(0, 8),
+            blocked: !!contentMap.blocked,
+            blocked_http_status: contentMap.blocked_http_status || null,
+            blocked_reason: contentMap.blocked_reason || null
+        }
+    };
+}
+
 // --- Hlavní smyčka Workera ---
 async function main() {
     await redisClient.connect();
     console.log('Redis connected.');
 
-    // Pool se připojuje lazy, ale test připojení je v pohodě
     await pool.query('SELECT 1');
     console.log('Postgres connected.');
 
@@ -126,8 +168,6 @@ async function main() {
 
         } catch (err) {
             console.error('[WORKER LOOP ERROR]', err?.message || err);
-
-            // Pokud se něco pokazí, malá pauza, aby se worker netočil v panice
             await new Promise(resolve => setTimeout(resolve, 3000));
         }
     }
@@ -137,14 +177,12 @@ async function main() {
 async function processUrl(url, interests, exclusions) {
     const client = await pool.connect();
 
-    // Proměnné, které potřebujeme i při blocked
     let pageUrl;
     let domainName;
     let domainId;
     let pathKey;
 
     try {
-        // Parse URL hned (ať víme doménu i při 403)
         pageUrl = new URL(url);
         domainName = pageUrl.hostname;
         pathKey = pageUrl.pathname + pageUrl.search;
@@ -153,8 +191,7 @@ async function processUrl(url, interests, exclusions) {
         const res = await fetchHtmlWithFallback(url);
         const status = res?.status;
 
-        // Pokud je to 403 (nebo velmi podobné "tvrdé NE"), uložíme blocked placeholder a končíme.
-        // (401 může znamenat login wall, 403 typicky bot-protection / forbidden.)
+        // 401/403 → uložit placeholder a skončit
         if (status === 401 || status === 403) {
             const reason = status === 401 ? 'Vyžaduje přihlášení nebo autorizaci' : 'Forbidden / bot protection';
             const blockedAura = makeBlockedAura(reason, status);
@@ -162,7 +199,6 @@ async function processUrl(url, interests, exclusions) {
 
             await client.query('BEGIN');
 
-            // 1) doména
             let { rows: [domain] } = await client.query(
                 'INSERT INTO domains (domain_name, last_analyzed) VALUES ($1, CURRENT_TIMESTAMP) ' +
                 'ON CONFLICT (domain_name) DO UPDATE SET last_analyzed = CURRENT_TIMESTAMP ' +
@@ -174,7 +210,6 @@ async function processUrl(url, interests, exclusions) {
             }
             domainId = domain.id;
 
-            // 2) stránka – uložíme placeholder auru + content_map s blocked informací
             const { rows: [page] } = await client.query(
                 `INSERT INTO pages (domain_id, url, title, meta_description, page_aura_circle, page_aura_star, content_map)
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -197,7 +232,6 @@ async function processUrl(url, interests, exclusions) {
                 ]
             );
 
-            // 3) vyčistit případná stará témata/odkazy pro tuhle stránku
             if (page?.id) {
                 await client.query('DELETE FROM page_topics WHERE page_id = $1', [page.id]);
                 await client.query('DELETE FROM links WHERE source_page_id = $1', [page.id]);
@@ -206,17 +240,11 @@ async function processUrl(url, interests, exclusions) {
             await client.query('COMMIT');
 
             console.log(`[BLOCKED] Stored placeholder for ${url} (HTTP ${status}).`);
-
-            // Agregovaná aura domény se může aktualizovat i s blocked stránkou (záleží na tobě).
-            // Zde ji aktualizujeme, aby doména mohla být "grey", pokud je vše blokované.
             await updateDomainAura(domainId);
-
             return;
         }
 
-        // Pokud není 2xx, ale není to 401/403, rozhodneme co dál:
-        // - 429/5xx/timeout: necháme vyhodit chybu a případné retry vyřeší vyšší logika (zatím jen log).
-        // - 404: uložíme jako blocked "not found" (aby se to necyklilo).
+        // 404 → uložit placeholder a skončit (ať se to netočí)
         if (status === 404) {
             const reason = 'Stránka neexistuje (404 Not Found)';
             const blockedAura = makeBlockedAura(reason, status);
@@ -262,8 +290,6 @@ async function processUrl(url, interests, exclusions) {
         }
 
         if (status < 200 || status >= 300) {
-            // Pro 429 a 5xx je typicky lepší neukládat "blocked", ale spíš retry/backoff.
-            // Zatím jen vyhodíme chybu (ať je to vidět v logu a neuloží se zavádějící aura).
             throw new Error(`HTTP ${status} while fetching ${url}`);
         }
 
@@ -271,22 +297,14 @@ async function processUrl(url, interests, exclusions) {
         const html = res.data;
         const $ = cheerio.load(html);
 
-        // --- Extrakce Sémantické Mapy ---
         const contentMap = extractContentMap($);
-
-        // --- Analýza Aury Stránky ---
         const pageAura = generatePageAura(contentMap, interests, exclusions);
-
-        // Generování slovního vysvětlení
         const explanationText = generateExplanation(pageAura, contentMap);
-
-        // Přiřazení finálního vysvětlení k objektu kruhu
         pageAura.circle.intent = explanationText;
 
-        // --- Zahájení databázové transakce ---
         await client.query('BEGIN');
 
-        // 1. Najít nebo vytvořit záznam pro doménu
+        // 1) doména
         let { rows: [domain] } = await client.query(
             'INSERT INTO domains (domain_name, last_analyzed) VALUES ($1, CURRENT_TIMESTAMP) ' +
             'ON CONFLICT (domain_name) DO UPDATE SET last_analyzed = CURRENT_TIMESTAMP ' +
@@ -298,7 +316,7 @@ async function processUrl(url, interests, exclusions) {
         }
         domainId = domain.id;
 
-        // 2. Vytvořit nebo aktualizovat záznam pro stránku
+        // 2) stránka
         const { rows: [page] } = await client.query(
             `INSERT INTO pages (domain_id, url, title, meta_description, page_aura_circle, page_aura_star, content_map)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -314,8 +332,8 @@ async function processUrl(url, interests, exclusions) {
         );
         const pageId = page.id;
 
-        // 3. Zpracovat a uložit témata (klíčová slova)
-        await client.query('DELETE FROM page_topics WHERE page_id = $1', [pageId]); // Smazat stará témata
+        // 3) témata
+        await client.query('DELETE FROM page_topics WHERE page_id = $1', [pageId]);
         if (contentMap.key_topics && contentMap.key_topics.length > 0) {
             const topicValues = contentMap.key_topics
                 .map(topic => `(${pageId}, '${topic.replace(/'/g, "''")}')`)
@@ -323,26 +341,68 @@ async function processUrl(url, interests, exclusions) {
             await client.query(`INSERT INTO page_topics (page_id, topic) VALUES ${topicValues} ON CONFLICT DO NOTHING`);
         }
 
-        // 4. Zpracovat a uložit odkazy a zařadit nové interní URL do fronty
-        await client.query('DELETE FROM links WHERE source_page_id = $1', [pageId]); // Smazat staré odkazy
+        // 4) odkazy
+        await client.query('DELETE FROM links WHERE source_page_id = $1', [pageId]);
         const links = extractLinks($, pageUrl);
 
+        // --- NOVÉ: připravíme batch lookup pro interní cíle, které už DB zná ---
+        const internalTargets = [];
+        const absToPathKey = new Map(); // absUrl -> pathKey (pro pages.url)
         for (const link of links) {
-            const linkAura = generateLinkAura(link.url);
+            if (!link.isInternal) continue;
+            const abs = normalizeUrl(link.url);
+            try {
+                const pk = toPathKey(abs);
+                absToPathKey.set(abs, pk);
+                internalTargets.push(pk);
+            } catch (_) {}
+        }
+
+        let knownTargetsByPathKey = new Map(); // pathKey -> row z pages
+        if (internalTargets.length > 0) {
+            // deduplikace
+            const uniqueTargets = Array.from(new Set(internalTargets));
+            // Jedním dotazem zjistíme, co už DB zná
+            const { rows } = await client.query(
+                `SELECT url, title, page_aura_circle, page_aura_star, content_map
+                 FROM pages
+                 WHERE domain_id = $1 AND url = ANY($2::text[])`,
+                [domainId, uniqueTargets]
+            );
+            knownTargetsByPathKey = new Map(rows.map(r => [r.url, r]));
+        }
+
+        for (const link of links) {
+            const absUrl = normalizeUrl(link.url);
+
+            // a) pokud interní a máme cílovou stránku v DB, uložíme link auru z ní
+            let linkAuraObject = null;
+            if (link.isInternal) {
+                const pk = absToPathKey.get(absUrl);
+                if (pk && knownTargetsByPathKey.has(pk)) {
+                    const targetRow = knownTargetsByPathKey.get(pk);
+                    linkAuraObject = makeKnownTargetLinkAura(targetRow);
+                }
+            }
+
+            // b) fallback odhad
+            if (!linkAuraObject) {
+                linkAuraObject = generateLinkAura(absUrl, domainName);
+            }
+
             await client.query(
                 'INSERT INTO links (source_page_id, target_url, link_text, link_aura_circle) VALUES ($1, $2, $3, $4)',
-                [pageId, link.url, link.text, linkAura]
+                [pageId, absUrl, link.text, linkAuraObject]
             );
 
-            // Pokud je odkaz interní a ještě nebyl zpracován, přidej ho do fronty
+            // c) enqueue interní URL (jen pokud ještě nebylo viděno)
             if (link.isInternal) {
-                const normalizedUrl = link.url.split('#')[0];
+                const normalizedUrl = absUrl;
                 const isMember = await redisClient.sIsMember(PROCESSED_SET_NAME, normalizedUrl);
 
                 if (!isMember) {
                     await redisClient.sAdd(PROCESSED_SET_NAME, normalizedUrl);
 
-                    // DŮLEŽITÉ: do fronty posíláme vždy JSON, aby worker nikdy nespadl na JSON.parse
                     const crawlJob = JSON.stringify({
                         url: normalizedUrl,
                         interests: interests || '',
@@ -354,23 +414,14 @@ async function processUrl(url, interests, exclusions) {
             }
         }
 
-        // --- Ukončení transakce ---
         await client.query('COMMIT');
 
-        // --- Aktualizace Agregované Aury Domény ---
         await updateDomainAura(domainId);
 
     } catch (err) {
-        // rollback jen pokud běží transakce
-        try {
-            await client.query('ROLLBACK');
-        } catch (rollbackErr) {
-            // ignore rollback error
-        }
-
+        try { await client.query('ROLLBACK'); } catch (_) {}
         console.error(`[PROCESS ERROR] Error processing ${url}:`, err?.message || err);
         throw err;
-
     } finally {
         client.release();
     }
@@ -391,7 +442,6 @@ async function updateDomainAura(domainId) {
         const entries = Object.entries(colorCounts);
         if (entries.length === 0) return;
 
-        // Najdeme nejčastější barvu
         const dominantColor = entries.sort((a, b) => b[1] - a[1])[0][0];
 
         const domainAuraCircle = { color: dominantColor, intent: `Aggregated from ${pages.length} pages` };
@@ -413,7 +463,6 @@ function extractContentMap($) {
         headings.push({ level: $(el).prop('tagName').toLowerCase(), text: $(el).text().trim() });
     });
 
-    // Jazykově agnostická extrakce klíčových témat
     const keywordsMeta = $('meta[name="keywords"]').attr('content');
     let key_topics = [];
     if (keywordsMeta) {
@@ -439,12 +488,13 @@ function extractLinks($, pageUrl) {
         if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
             try {
                 const absoluteUrl = new URL(href, pageUrl.href).href;
-                if (!uniqueUrls.has(absoluteUrl)) {
-                    uniqueUrls.add(absoluteUrl);
+                const normalized = normalizeUrl(absoluteUrl);
+                if (!uniqueUrls.has(normalized)) {
+                    uniqueUrls.add(normalized);
                     links.push({
-                        url: absoluteUrl,
+                        url: normalized,
                         text: $(element).text().trim(),
-                        isInternal: new URL(absoluteUrl).hostname === pageUrl.hostname
+                        isInternal: new URL(normalized).hostname === pageUrl.hostname
                     });
                 }
             } catch (e) {
@@ -460,35 +510,30 @@ function generateExplanation(pageAura, contentMap) {
     const { star, relevance } = pageAura;
     const { stability, relation: trust, meaning } = star;
 
-    // --- Personalizace ---
     if (relevance === 1) {
         reasons.push('Stránka se dobře shoduje s vašimi zájmy.');
     } else if (relevance === -1) {
         reasons.push('Upozornění: Obsah se může shodovat s tématy, která jste vyloučili.');
     }
 
-    // Hodnocení Stability
     if (stability?.value > 90) {
         reasons.push('Stránka je technicky a strukturálně velmi dobře postavena.');
     } else if (stability?.value < 60) {
         reasons.push('Technická stabilita má rezervy, což může ovlivnit zážitek.');
     }
 
-    // Hodnocení Důvěry (Vztahu)
     if (trust?.value > 70) {
         reasons.push('Vysoká míra důvěryhodnosti díky přítomnosti klíčových signálů.');
     } else if (trust?.value < 40) {
         reasons.push('Důvěryhodnost je nižší, mohou chybět transparentní informace.');
     }
 
-    // Hodnocení Smyslu
     if (meaning?.value > 80) {
         reasons.push('Obsah je tematicky silně zaměřený a jasný.');
     } else if (meaning?.value < 40) {
         reasons.push('Tematické zaměření stránky není zcela zřejmé.');
     }
 
-    // Doplňující postřehy z obsahu
     if (contentMap.headings?.filter(h => h.level === 'h1').length > 1) {
         reasons.push('Struktura obsahu by mohla být přehlednější (bylo nalezeno více hlavních nadpisů H1).');
     }
@@ -504,14 +549,12 @@ function generateExplanation(pageAura, contentMap) {
 }
 
 function generatePageAura(contentMap, interests, exclusions) {
-    // Příprava uživatelských preferencí
     const interestKeywords = (interests || '').toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
     const exclusionKeywords = (exclusions || '').toLowerCase().split(',').map(k => k.trim()).filter(Boolean);
     const pageTopics = contentMap.key_topics || [];
 
-    // Vylepšená, ale stále jednoduchá, rule-based analýza
     let stability = 100;
-    if (contentMap.headings?.filter(h => h.level === 'h1').length > 1) stability -= 20; // Penalizace za více H1
+    if (contentMap.headings?.filter(h => h.level === 'h1').length > 1) stability -= 20;
     if (!contentMap.title) stability -= 10;
     if (!contentMap.meta_description) stability -= 10;
 
@@ -521,20 +564,18 @@ function generatePageAura(contentMap, interests, exclusions) {
 
     let meaning = 20 + (pageTopics.length * 10);
 
-    // --- Personalizace na základě zájmů ---
     let relevanceScore = 0;
     if (interestKeywords.some(keyword => pageTopics.includes(keyword))) {
         trust += 15;
         meaning += 20;
-        relevanceScore = 1; // Pozitivní relevance
+        relevanceScore = 1;
     }
     if (exclusionKeywords.some(keyword => pageTopics.includes(keyword))) {
         trust -= 30;
         meaning -= 20;
-        relevanceScore = -1; // Negativní relevance
+        relevanceScore = -1;
     }
 
-    // Omezení hodnot na 0-100
     trust = Math.max(0, Math.min(trust, 100));
     meaning = Math.max(0, Math.min(meaning, 100));
 
@@ -547,7 +588,6 @@ function generatePageAura(contentMap, interests, exclusions) {
             stability: { value: stability, saturation: 95 },
             relation: { value: trust, saturation: 90 },
             meaning: { value: meaning, saturation: 80 },
-            // doplníme ostatní cípy, ať je tvar konzistentní
             flow: { value: 50, saturation: 60 },
             will: { value: 50, saturation: 60 },
             voice: { value: 50, saturation: 60 },
@@ -558,31 +598,33 @@ function generatePageAura(contentMap, interests, exclusions) {
     };
 }
 
-function generateLinkAura(url) {
+function generateLinkAura(url, currentHostname) {
     const u = new URL(url);
-    let color = 'blue';
-    let intent = 'Běžný interní odkaz.';
 
-    if (u.hostname !== new URL(process.env.ROOT_URL || 'http://default.com').hostname) {
+    let color = 'blue';
+    let intent = 'Interní odkaz.';
+
+    const isExternal = currentHostname ? (u.hostname !== currentHostname) : true;
+    if (isExternal) {
         intent = 'Odkaz na externí doménu.';
+        color = 'indigo';
     }
 
-    if (u.hostname.includes('facebook.') || u.hostname.includes('twitter.') || u.hostname.includes('linkedin.') || u.hostname.includes('instagram.')) {
+    const host = u.hostname.toLowerCase();
+
+    if (host.includes('facebook.') || host.includes('twitter.') || host.includes('linkedin.') || host.includes('instagram.')) {
         color = 'indigo';
         intent = 'Odkaz na sociální síť.';
-    } else if (u.pathname.match(/\.(zip|pdf|exe|dmg|rar|tar\.gz)$/)) {
+    } else if (u.pathname.match(/\.(zip|pdf|exe|dmg|rar|7z|tar\.gz)$/i)) {
         color = 'orange';
         intent = 'Odkaz ke stažení souboru.';
-    } else if (u.hostname.includes('youtube.com') || u.hostname.includes('vimeo.com')) {
+    } else if (host.includes('youtube.com') || host.includes('youtu.be') || host.includes('vimeo.com')) {
         color = 'red';
         intent = 'Odkaz na video platformu.';
     }
 
     return {
-        circle: {
-            color: color,
-            intent: intent
-        },
+        circle: { color, intent },
         star: {
             stability: { value: 50, saturation: 50 },
             flow: { value: 50, saturation: 50 },
