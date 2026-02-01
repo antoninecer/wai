@@ -483,27 +483,60 @@ function extractContentMap($) {
 function extractLinks($, pageUrl) {
     const links = [];
     const uniqueUrls = new Set();
+
+    // základ pro porovnání "stejná stránka"
+    const currentBase = (pageUrl.origin + pageUrl.pathname + pageUrl.search);
+
+    // přípony, které nechceme vůbec analyzovat jako stránky
+    const SKIP_EXT_RE = /\.(jpg|jpeg|png|gif|webp|svg|ico|css|js|mjs|map|woff2?|ttf|eot|mp4|webm|mp3|wav|pdf|zip|rar|7z|tar\.gz|gz|tgz)$/i;
+
     $('a[href]').each((i, element) => {
         const href = $(element).attr('href');
-        if (href && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
-            try {
-                const absoluteUrl = new URL(href, pageUrl.href).href;
-                const normalized = normalizeUrl(absoluteUrl);
-                if (!uniqueUrls.has(normalized)) {
-                    uniqueUrls.add(normalized);
-                    links.push({
-                        url: normalized,
-                        text: $(element).text().trim(),
-                        isInternal: new URL(normalized).hostname === pageUrl.hostname
-                    });
-                }
-            } catch (e) {
-                /* Ignorovat neplatné URL */
+        if (!href) return;
+
+        // rychlé odfiltrování nesmyslů
+        if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) {
+            return;
+        }
+
+        try {
+            const absoluteUrl = new URL(href, pageUrl.href).href;
+
+            // normalizace (bez hashe)
+            const normalized = absoluteUrl.split('#')[0];
+
+            // self-link (typicky /#sekce) => nic nového, nelezeme to jako stránku
+            if (normalized === currentBase) {
+                return;
             }
+
+            // assety / soubory => ne
+            const u = new URL(normalized);
+            if (SKIP_EXT_RE.test(u.pathname)) {
+                return;
+            }
+
+            // (volitelně) vyhoď čistě asset složky, pokud je to tak postavené
+            if (u.pathname.startsWith('/assets/')) {
+                return;
+            }
+
+            if (!uniqueUrls.has(normalized)) {
+                uniqueUrls.add(normalized);
+                links.push({
+                    url: normalized,
+                    text: $(element).text().trim(),
+                    isInternal: u.hostname === pageUrl.hostname
+                });
+            }
+        } catch (e) {
+            // ignorujeme neplatné URL
         }
     });
+
     return links;
 }
+
 
 function generateExplanation(pageAura, contentMap) {
     const reasons = [];
