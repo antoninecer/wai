@@ -111,6 +111,90 @@ async function cleanupAndQueue(jobData) {
     await queueAnalysis(jobData, { force: true });
 }
 
+/**
+ * NOVÉ: Link preview s volitelným "safe enqueue".
+ *
+ * Body:
+ * {
+ *   "url": "https://rightdone.eu/about.php",
+ *   "queueIfMissing": true,
+ *   "interests": "...",      // volitelné
+ *   "exclusions": "..."      // volitelné
+ * }
+ *
+ * Odpovědi:
+ * - { status: "known", pageAura: {...} }
+ * - { status: "queued", message: "...", domain, path }
+ * - { status: "unknown", ... } (když queueIfMissing=false)
+ */
+app.post('/link-preview', async (req, res) => {
+    const { url, queueIfMissing = false, interests = '', exclusions = '' } = req.body || {};
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    try {
+        const u = new URL(url);
+
+        // základní bezpečnost: jen http/https
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+            return res.status(400).json({ error: 'Only http/https URLs are supported' });
+        }
+
+        const domainName = u.hostname;
+        const pagePath = u.pathname + u.search;
+
+        const { rows: [page] } = await pool.query(
+            `SELECT p.page_aura_star, p.page_aura_circle, p.content_map
+             FROM pages p
+             JOIN domains d ON p.domain_id = d.id
+             WHERE d.domain_name = $1 AND p.url = $2`,
+            [domainName, pagePath]
+        );
+
+        if (page) {
+            const contentMap = page.content_map || {};
+            const blocked = !!contentMap.blocked;
+
+            return res.json({
+                status: 'known',
+                url,
+                domain: domainName,
+                path: pagePath,
+                blocked,
+                pageAura: {
+                    star: page.page_aura_star,
+                    circle: page.page_aura_circle,
+                    content_map: contentMap
+                }
+            });
+        }
+
+        // není v DB → podle nastavení buď jen řekneme unknown, nebo bezpečně enqueue
+        if (queueIfMissing) {
+            // používáme tvou deduplikovanou queue
+            queueAnalysis({ url, interests, exclusions });
+
+            return res.json({
+                status: 'queued',
+                url,
+                domain: domainName,
+                path: pagePath,
+                message: 'Cíl nebyl v databázi – zařazuji bezpečně do analýzy.'
+            });
+        }
+
+        return res.json({
+            status: 'unknown',
+            url,
+            domain: domainName,
+            path: pagePath
+        });
+
+    } catch (err) {
+        console.error('[LINK PREVIEW ERROR]', err.stack);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 app.post('/analyze', async (req, res) => {
     const { url, force_recrawl = false, localData } = req.body;
     if (!url) return res.status(400).json({ error: 'URL is required' });
